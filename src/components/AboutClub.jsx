@@ -388,11 +388,6 @@ export default function AboutClub() {
         <div className="ab-inner" style={{ paddingBlock: 0 }}>
           <StickyStack
             maxWidth={900}
-            /* These four carry real multi-paragraph copy — far taller than the
-               main site's cards — so the pin needs a taller window before it
-               can hold them on one screen. Below this they read as a plain
-               column, which beats shrinking the copy to nothing. */
-            minHeight={800}
             header={
               <>
                 <div className="eyebrow">About</div>

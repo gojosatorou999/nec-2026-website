@@ -35,10 +35,9 @@ export default function StickyStack({
   perCard = 26, // vh of scroll each card after the first gets to land in
   maxWidth = 900,
   minWidth = 861,
-  // A pinned deck has to fit one screen. Below this the pin is dropped and the
-  // cards become a plain column — better than shrinking real copy to nothing
-  // to force a four-card pile into a short window.
-  minHeight = 640,
+  // Only genuinely tiny windows drop the pin. Everything above this keeps the
+  // stack and scales the deck to fit instead — see fitDeck().
+  minHeight = 480,
   className = '',
 }) {
   const rootRef = useRef(null);
@@ -61,6 +60,50 @@ export default function StickyStack({
         el.style.opacity = '';
         el.style.filter = '';
       });
+      const deck = root.querySelector(':scope .stack-deck');
+      if (deck) {
+        deck.style.transform = '';
+        deck.style.marginBottom = '';
+      }
+    };
+
+    /**
+     * Scale the deck down to whatever room the pin actually has.
+     *
+     * The alternative was to drop the pin on short viewports, which silently
+     * removed the stacking effect people had asked for. This keeps the stack
+     * at every size and shrinks it to fit instead — the tallest card plus the
+     * headroom the pile lifts into, measured against the space left after the
+     * heading. Transforms don't affect layout, so the deck's box is pulled in
+     * by the same amount to keep the flex centring honest.
+     */
+    const fitDeck = () => {
+      const pin = root.querySelector(':scope .stack-pin');
+      const deck = root.querySelector(':scope .stack-deck');
+      const header = root.querySelector(':scope .stack-header');
+      if (!pin || !deck) return;
+
+      deck.style.transform = 'none';
+      deck.style.marginBottom = '0px';
+
+      const cs = getComputedStyle(pin);
+      const avail =
+        pin.clientHeight -
+        parseFloat(cs.paddingTop) -
+        parseFloat(cs.paddingBottom) -
+        (header ? header.offsetHeight + (parseFloat(cs.rowGap) || 0) : 0);
+
+      const need = deck.offsetHeight; // headroom + the tallest card
+      if (need <= 0 || avail <= 0) return;
+
+      const k = Math.min(1, avail / need);
+      if (k < 0.999) {
+        deck.style.transform = `scale(${k})`;
+        deck.style.marginBottom = `${-need * (1 - k)}px`;
+      } else {
+        deck.style.transform = '';
+        deck.style.marginBottom = '';
+      }
     };
 
     const update = () => {
@@ -109,20 +152,49 @@ export default function StickyStack({
     const applyMode = () => {
       enabled = mq.matches;
       root.dataset.stacked = String(enabled);
-      if (enabled) update();
-      else clear();
+      if (enabled) {
+        fitDeck();
+        update();
+      } else {
+        clear();
+      }
+    };
+
+    const onResize = () => {
+      if (enabled) fitDeck();
+      onScroll();
     };
 
     applyMode();
+
+    // Card height depends on the webfont, so refit once it lands — measuring
+    // against fallback metrics leaves the scale slightly wrong.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (enabled) {
+          fitDeck();
+          update();
+        }
+      });
+    }
+
+    // Images inside cards (the mentor portraits) also change the height.
+    const imgs = Array.from(root.querySelectorAll('img'));
+    const onImg = () => enabled && (fitDeck(), update());
+    imgs.forEach((img) => {
+      if (!img.complete) img.addEventListener('load', onImg, { once: true });
+    });
+
     mq.addEventListener('change', applyMode);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+    window.addEventListener('resize', onResize);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
       mq.removeEventListener('change', applyMode);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('resize', onResize);
+      imgs.forEach((img) => img.removeEventListener('load', onImg));
     };
   }, [minWidth, minHeight, count]);
 
