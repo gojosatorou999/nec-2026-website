@@ -19,6 +19,7 @@ import { EVENT } from '../data/site';
 const FRAME_COUNT = 80;
 const FPS = 24;
 const START_AFTER = 10; // frames buffered before playback begins
+const IN_FLIGHT = 12; // parallel fetches; sequential decode only managed ~10fps
 const frameSrc = (i) => `/sequence/bulb_${String(i).padStart(3, '0')}.jpg`;
 
 export default function SequenceLoader({ onComplete }) {
@@ -37,7 +38,7 @@ export default function SequenceLoader({ onComplete }) {
     const images = new Array(FRAME_COUNT);
     let decoded = 0;
     let raf = 0;
-    let startedAt = 0;
+    let playing = false;
     let cancelled = false;
 
     const draw = (i) => {
@@ -71,16 +72,30 @@ export default function SequenceLoader({ onComplete }) {
       }, 700);
     };
 
+    // The playhead advances in frames-per-second but is *clamped* to what has
+    // decoded, rather than being derived from elapsed wall-clock time. With a
+    // wall clock the schedule kept running while playback was starved, so the
+    // moment a frame landed it jumped several ahead — visible as stutter and
+    // skipped frames. Advancing incrementally means a slow network just slows
+    // the film down instead of tearing holes in it.
+    let playhead = 0;
+    let last = 0;
+
     const tick = (now) => {
       if (cancelled) return;
-      if (!startedAt) startedAt = now;
+      if (!last) last = now;
+      const dt = Math.min((now - last) / 1000, 0.1); // clamp tab-switch jumps
+      last = now;
 
-      const scheduled = ((now - startedAt) / 1000) * FPS;
-      // never outrun what has actually decoded
-      const frame = Math.min(Math.floor(scheduled), decoded - 1, FRAME_COUNT - 1);
+      // Never advance more than one frame per tick. On a device whose rAF is
+      // running slow, a time-proportional step skips frames; capping it makes
+      // the film play slower instead of tearing, which is the right trade for
+      // an 80-frame clip you only see once.
+      playhead = Math.min(playhead + Math.min(dt * FPS, 1), decoded - 1, FRAME_COUNT - 1);
+      const frame = Math.max(0, Math.floor(playhead));
 
-      if (frame >= 0) draw(frame);
-      setProgress(Math.round((Math.max(0, frame) / (FRAME_COUNT - 1)) * 100));
+      draw(frame);
+      setProgress(Math.round((frame / (FRAME_COUNT - 1)) * 100));
 
       if (frame >= FRAME_COUNT - 1) {
         // hold on the resolved lockup for a beat before handing over
@@ -107,27 +122,43 @@ export default function SequenceLoader({ onComplete }) {
       };
     }
 
-    // Sequential decode keeps frames in order, so `decoded` is a safe high-water
-    // mark — with parallel loads frame 40 could land before frame 3.
-    const loadFrom = (i) => {
-      if (cancelled || i >= FRAME_COUNT) return;
+    // Fetch several frames at once. Loading them strictly one-after-another
+    // only sustained ~10fps of decode against 24fps of playback, which is what
+    // starved the film. `decoded` still has to be the *contiguous* prefix that
+    // has arrived — out of order, frame 40 can land while 3 is still in
+    // flight, and playing to 40 would skip the gap.
+    const ready = new Array(FRAME_COUNT).fill(false);
+    let nextToStart = 0;
+
+    const advanceHighWater = () => {
+      while (decoded < FRAME_COUNT && ready[decoded]) decoded++;
+      if (decoded >= START_AFTER && !playing) {
+        playing = true;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+
+    const startOne = () => {
+      if (cancelled || nextToStart >= FRAME_COUNT) return;
+      const i = nextToStart++;
       const img = new Image();
-      const next = () => {
+      const done = () => {
         if (cancelled) return;
-        decoded = i + 1;
-        if (decoded === START_AFTER && !startedAt) raf = requestAnimationFrame(tick);
-        loadFrom(i + 1);
+        ready[i] = true;
+        advanceHighWater();
+        startOne(); // keep the window full
       };
       img.onload = () => {
         images[i] = img;
         if (i === 0) draw(0);
-        next();
+        done();
       };
-      // A missing frame must not stall the loader — skip it and keep going.
-      img.onerror = next;
+      // A missing frame must not stall the loader — mark it and keep going.
+      img.onerror = done;
       img.src = frameSrc(i);
     };
-    loadFrom(0);
+
+    for (let n = 0; n < IN_FLIGHT; n++) startOne();
 
     // If the network is hopeless, don't trap the visitor on the loader.
     const bail = setTimeout(finish, 12000);

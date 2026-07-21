@@ -36,12 +36,19 @@ function smoothstep(min, max, value) {
   return x * x * (3 - 2 * x);
 }
 
-/** Per-shard separation, staggered: apart 0.08→0.45, hold, back 0.55→0.92. */
+/**
+ * Per-shard separation. Strictly monotonic in scroll: 0 = seated, 1 = flung
+ * clear. It used to open and then close again, which made the logo reassemble
+ * by itself at the bottom of the rail whether you wanted it to or not. Now
+ * nothing reverses on its own — scrolling down takes it apart, scrolling back
+ * up puts it together, shard by shard, exactly tracking the scrollbar.
+ *
+ * `stagger` (0 → 0.35, one value per shard) offsets each shard's window so
+ * they leave one at a time rather than all at once.
+ */
 function shardSeparation(p, stagger) {
-  const d = stagger * 0.12;
-  const open = smoothstep(0.08 + d, 0.45 + d, p);
-  const close = smoothstep(0.55 + d * 0.5, 0.92 - (0.35 - stagger) * 0.1, p);
-  return open * (1 - close);
+  const s = stagger / 0.35; // normalise to 0→1 across the eight shards
+  return smoothstep(0.05 + s * 0.35, 0.45 + s * 0.35, p);
 }
 
 export default function IdeaLogoScene({ progressRef }) {
@@ -97,7 +104,7 @@ export default function IdeaLogoScene({ progressRef }) {
 
     // High threshold: only genuinely hot pixels (the bulb core, edge speculars)
     // bloom. A low threshold made the entire mark glow and hurt to look at.
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.5, 1.0, 0.88);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.42, 1.0, 0.92);
     composer.addPass(bloomPass);
 
     const finishPass = new ShaderPass({
@@ -429,9 +436,13 @@ export default function IdeaLogoScene({ progressRef }) {
       // framework drifts peri → violet as the logo opens up
       frameworkMaterial.color.setHex(PERI).lerp(new THREE.Color(VIOLET), sepAvg * 0.6);
 
-      shardMaterial.emissiveIntensity = 0.08 + sepAvg * 0.16;
-      coreLight.intensity = 0.25 + sepAvg * 0.4;
-      bulbMaterial.emissiveIntensity = 0.22 + sepAvg * 0.28;
+      // Separation no longer falls back to 0 at the end of the rail, so these
+      // now *rest* at their maximum rather than passing through it. Ranges are
+      // tightened accordingly — the old peaks left the bulb sitting blown out
+      // as a white blob for the whole bottom of the hero.
+      shardMaterial.emissiveIntensity = 0.08 + sepAvg * 0.1;
+      coreLight.intensity = 0.22 + sepAvg * 0.16;
+      bulbMaterial.emissiveIntensity = 0.18 + sepAvg * 0.1;
 
       starMat.uniforms.uTime.value = t;
       finishPass.uniforms.uTime.value = t;

@@ -30,10 +30,11 @@ function smoothstep(min, max, value) {
   return x * x * (3 - 2 * x);
 }
 
+/* Mean separation across the eight shards — mirrors IdeaLogoScene's per-shard
+   curve so the copy fades in step with the mark. Monotonic: the logo no longer
+   reassembles on its own at the end of the rail. */
 function shardSeparation(p) {
-  const open = smoothstep(0.1, 0.47, p);
-  const close = smoothstep(0.56, 0.9, p);
-  return open * (1 - close);
+  return smoothstep(0.05, 0.8, p);
 }
 
 export default function HeroSection() {
@@ -220,7 +221,7 @@ export default function HeroSection() {
             Take it <span className="gradient-text">apart</span>
           </>,
           <>
-            Build it back <span className="gradient-text">better</span>
+            Build it back <span className="gradient-text">on the way up</span>
           </>,
         ].map((copy, i) => (
           <div
