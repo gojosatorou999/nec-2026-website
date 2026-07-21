@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Design references dropped in for this build, not part of the site. Kept on
+# disk, deliberately out of the repo — nothing here is imported by the build,
+# and all of it is preserved in the original IDEA-INCUBATOR-ECELL repo.
+#
+# idea-heropage-v1 / ideaclublogoeffect carry their own .git (they would land
+# as broken embedded repos); ideaclublogoeffect also carries node_modules plus
+# the 31MB ungraded source clip. The graded frames we ship live in
+# public/sequence. winners/ is the saved Next.js build the cube scene was read
+# out of; about.2/ is a separate mini-project.
+/idea-heropage-v1/
+/ideaclublogoeffect/
+/winners/
+/about.2/
+
+# Faculty portraits duplicated at the repo root; the site loads them from
+# public/faculty/, which is what MENTORS[].photo points at.
+/principal-reddy.png
+/rajini-kanth.png
+/sabitha.png
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,1097 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NEC 2026 CHALLENGE — DESIGN SYSTEM
+   Palette is derived from the Idea Incubator mark (sky blue / bulb amber / ink)
+   and the winner-page accent gradient (periwinkle → mint → violet).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surfaces ── */
+  --ink: #05070d;
+  --ink-2: #0a0e18;
+  --ink-3: #111726;
+
+  /* ── Brand (from the Idea Incubator logo) ── */
+  --sky: #7fd4f5;
+  --sky-deep: #3aa8d8;
+  --bulb: #ffd65c;
+  --bulb-deep: #e8b93a;
+
+  /* ── Accent gradient ── */
+  --peri: #a3b2ff;
+  --mint: #7affcf;
+  --violet: #bc7aff;
+
+  /* ── Text ── */
+  --text: #f4f7fb;
+  --text-2: #a8b4c8;
+  --text-3: #61708a;
+
+  /* ── Glass ── */
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(255, 255, 255, 0.075);
+  --glass-brd: rgba(255, 255, 255, 0.11);
+  --glass-brd-lit: rgba(255, 255, 255, 0.2);
+
+  /* ── Radii — generous & consistent, nothing boxy ── */
+  --r-xs: 10px;
+  --r-sm: 14px;
+  --r-md: 20px;
+  --r-lg: 28px;
+  --r-xl: 36px;
+  --r-2xl: 44px;
+  --r-pill: 999px;
+
+  /* ── Type ── */
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Motion ── */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── RESET ──────────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* `clip`, never `hidden`. overflow-x:hidden forces overflow-y to `auto`,
+     which makes html/body a scroll container and silently breaks every
+     `position: sticky` descendant — the hero logo and the card stacks all
+     stopped pinning and left their rails behind as dead space. `clip`
+     suppresses the horizontal overflow without creating that container. */
+  overflow-x: clip;
+  background: var(--ink);
+}
+
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: clip; /* see the note on html — `hidden` here breaks sticky too */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Buttons don't inherit type by default — several tiles rely on this. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+}
+
+button { cursor: pointer; }
+
+img, svg { display: block; max-width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(163, 178, 255, 0.22);
+  border-radius: var(--r-pill);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(163, 178, 255, 0.4); }
+
+::selection {
+  background: rgba(122, 255, 207, 0.25);
+  color: var(--text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+/* ═══ GLASSMORPHISM ═══════════════════════════════════════════════════════ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-brd);
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
+    0 24px 60px -18px rgba(0, 0, 0, 0.75);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-brd-lit);
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 30px 80px -20px rgba(0, 0, 0, 0.8);
+}
+
+/* Soft specular sheen across the top edge of any glass panel */
+.glass-sheen { position: relative; overflow: hidden; }
+.glass-sheen::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(163, 178, 255, 0.55),
+    rgba(122, 255, 207, 0.4),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ═══ TYPOGRAPHY ══════════════════════════════════════════════════════════ */
+.font-display { font-family: var(--font-display); }
+.font-body    { font-family: var(--font-body); }
+.font-mono    { font-family: var(--font-mono); }
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.gradient-text {
+  background: linear-gradient(100deg, var(--peri), var(--mint) 45%, var(--violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* ═══ HAIRLINE GRADIENT RULE (from the winner-page reference) ═════════════ */
+.hairline {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    var(--peri),
+    rgba(122, 255, 207, 0.45) 53%,
+    rgba(188, 122, 255, 0) 97%
+  );
+}
+
+/* ═══ BUTTONS ═════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 26px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.35s var(--ease-expo), box-shadow 0.35s var(--ease-expo),
+    background 0.35s var(--ease-soft), border-color 0.35s var(--ease-soft);
+  will-change: transform;
+}
+
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--sky), var(--peri) 60%, var(--violet));
+  color: #05070d;
+  box-shadow: 0 10px 34px -10px rgba(163, 178, 255, 0.6);
+}
+.btn-primary:hover { box-shadow: 0 16px 44px -10px rgba(163, 178, 255, 0.8); }
+
+.btn-ghost {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-color: var(--glass-brd);
+  color: var(--text);
+}
+.btn-ghost:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-brd-lit);
+}
+
+/* ═══ CHIP / BADGE ════════════════════════════════════════════════════════ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 15px;
+  border-radius: var(--r-pill);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* ═══ NAV ═════════════════════════════════════════════════════════════════ */
+.nav-link {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  padding: 6px 2px;
+  transition: color 0.3s var(--ease-soft);
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 1.5px;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--peri), var(--mint));
+  transition: width 0.4s var(--ease-expo);
+}
+.nav-link:hover { color: var(--text); }
+.nav-link:hover::after { width: 100%; }
+
+/* ═══ ROSTER TILE ═════════════════════════════════════════════════════════ */
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  text-align: left;
+  border-radius: var(--r-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.55s var(--ease-expo), border-color 0.4s var(--ease-soft),
+    background 0.4s var(--ease-soft), box-shadow 0.55s var(--ease-expo);
+}
+
+.tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    rgba(163, 178, 255, 0.16),
+    transparent 70%
+  );
+  transition: opacity 0.5s var(--ease-soft);
+}
+
+.tile:hover,
+.tile[data-active='true'] {
+  transform: translateY(-5px);
+  border-color: var(--glass-brd-lit);
+  background: var(--glass-bg-strong);
+  box-shadow: 0 26px 60px -22px rgba(0, 0, 0, 0.9);
+}
+.tile:hover::after,
+.tile[data-active='true']::after { opacity: 1; }
+
+/* Reveal-on-scroll for tiles */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.75s var(--ease-expo), transform 0.75s var(--ease-expo);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* ═══ HERO RAIL ═══════════════════════════════════════════════════════════
+   The long scroll the pinned logo plays across. Shortened on small screens:
+   700vh of thumb-scrolling to get past the hero is punishing on a phone.
+   ═════════════════════════════════════════════════════════════════════════ */
+.hero-rail {
+  position: relative;
+  /* 190svh = a shade under one screen of actual scrolling once the 100svh pin
+     is subtracted, which is the whole break-and-rebuild arc. It was 700vh, six
+     screens of scrolling for one animation. Matches the pin's svh unit so no
+     sliver of dead rail can appear under the hero as it releases. */
+  height: 190svh;
+}
+
+.hero-caption {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(120px, 17vh, 190px);
+  z-index: 3;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 2px 24px rgba(5, 7, 13, 0.9);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.credit-name {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+
+@media (max-width: 860px) {
+  .hero-rail { height: 150svh; }
+  .hero-scroll-cue { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No scene to play through, so the rail collapses to a normal hero */
+  .hero-rail { height: auto; }
+  .hero-rail > div { position: relative; }
+}
+
+/* ═══ STICKY CARD STACK ═══════════════════════════════════════════════════
+   Cards pile up instead of sitting as static boxes in a row: each one sticks
+   under the header while the next slides over it, and un-piles on the way
+   back up. Position-driven, so it is symmetric in both scroll directions.
+
+   `--i` is the card's index, set inline. The scale/offset falloff is applied
+   by StickyStack in JS, since it depends on how many cards are above it.
+   ═════════════════════════════════════════════════════════════════════════ */
+.stack {
+  position: relative;
+  height: var(--stack-rail, 152svh);
+}
+
+/* The pinned frame. Heading and deck are centred together as one composed
+   screen, with the whole budget kept under 100svh so nothing is ever cut off:
+   navbar clearance + heading + deck headroom + the tallest card. */
+.stack-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(18px, 2.6vh, 30px);
+  padding: clamp(76px, 10vh, 96px) 0 clamp(24px, 4vh, 44px);
+}
+
+.stack-header {
+  flex: 0 0 auto;
+  max-width: 660px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Every card shares one grid cell, so they genuinely overlap. The top padding
+   is headroom for the buried cards, which lift up behind the front one. */
+.stack-deck {
+  flex: 0 1 auto;
+  display: grid;
+  place-items: center;
+  padding-top: 78px;
+  min-height: 0;
+}
+
+.stack-item {
+  grid-area: 1 / 1;
+  width: min(var(--stack-max, 900px), 100%);
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+/* Short viewports: the heading gives up its supporting line and the cards
+   tighten, rather than letting the front card overflow the pin. */
+@media (max-height: 860px) {
+  .stack-pin {
+    padding-top: clamp(64px, 8vh, 80px);
+    gap: 14px;
+  }
+  .stack-header h2 {
+    font-size: clamp(1.6rem, 3.4vw, 2.3rem) !important;
+    margin-top: 10px !important;
+  }
+  .stack-header p { display: none; }
+  .stack-deck { padding-top: 62px; }
+  .stack-card {
+    padding: 20px 26px;
+    gap: 12px;
+  }
+  .stack-card p { font-size: 0.9rem !important; line-height: 1.6 !important; }
+}
+
+/* ═══ REDIRECT TILE ═══════════════════════════════════════════════════════
+   Stands in for a section and hands off to its own page. Shares the decks'
+   easing and lift so the whole page reads as one motion language.
+   ═════════════════════════════════════════════════════════════════════════ */
+.redirect-section {
+  position: relative;
+  padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 80px);
+}
+
+.redirect-tile {
+  --accent: var(--peri);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(28px, 4vw, 62px);
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(30px, 4.4vw, 58px);
+  border-radius: var(--r-2xl);
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(180deg, rgba(24, 32, 52, 0.99), rgba(13, 18, 31, 0.99));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 34px 80px -28px rgba(0, 0, 0, 0.95);
+  overflow: hidden;
+
+  /* Opacity and transform are written inline by RedirectTile from scroll
+     position; only the hover affordances transition here. */
+  opacity: 0;
+  transform: translateY(46px) scale(0.97);
+  transition: border-color 0.4s var(--ease-soft), box-shadow 0.6s var(--ease-expo);
+  will-change: transform, opacity;
+}
+.redirect-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.85;
+}
+.redirect-tile:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 40px 90px -26px rgba(0, 0, 0, 0.95);
+}
+.redirect-tile:hover .redirect-cta { transform: translateY(-2px); }
+
+.redirect-title {
+  margin-top: 16px;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.redirect-body {
+  margin-top: 18px;
+  max-width: 620px;
+  font-size: 1rem;
+  color: var(--text-2);
+  line-height: 1.75;
+}
+
+.redirect-cta {
+  margin-top: 30px;
+  transition: transform 0.5s var(--ease-expo);
+}
+
+.redirect-stats {
+  display: flex;
+  gap: clamp(22px, 3.4vw, 48px);
+  flex-shrink: 0;
+}
+.redirect-stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+@media (max-width: 900px) {
+  .redirect-tile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .redirect-stats { flex-wrap: wrap; }
+}
+
+/* Narrow viewports drop the pin — a deck needs room a phone hasn't got. */
+.stack[data-stacked='false'] {
+  height: auto;
+}
+.stack[data-stacked='false'] .stack-pin {
+  position: static;
+  height: auto;
+  padding: 0;
+  gap: 26px;
+}
+.stack[data-stacked='false'] .stack-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 0;
+}
+.stack[data-stacked='false'] .stack-item {
+  width: 100%;
+}
+
+/* The pile needs opaque cards — glass over glass turns to mud once three of
+   them overlap, and you stop being able to read the one on top. */
+.stack-item > .person-card,
+.stack-item > .stack-card {
+  background: linear-gradient(180deg, rgba(24, 32, 52, 0.99), rgba(13, 18, 31, 0.99));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.stack-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(26px, 3vw, 38px);
+  border-radius: var(--r-xl);
+  /* A brighter rim than the glass cards: it is the only thing separating one
+     card in the pile from the next, so it has to survive being dimmed. */
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 34px 80px -28px rgba(0, 0, 0, 0.95);
+}
+.stack-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent, var(--peri)), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack { height: auto; }
+  .stack-pin {
+    position: static;
+    height: auto;
+    padding: 0;
+    gap: 26px;
+  }
+  .stack-deck {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-top: 0;
+  }
+  .stack-item {
+    width: 100%;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
+
+/* ═══ SLIDE-IN DETAIL PANEL (winner-page pattern) ═════════════════════════ */
+.panel-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(5, 7, 13, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s var(--ease-soft), visibility 0s 0.6s;
+}
+.panel-scrim[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s var(--ease-soft), visibility 0s 0s;
+}
+
+.detail-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 90;
+  height: 100dvh;
+  width: min(560px, 100vw);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(28px, 5vw, 52px);
+  padding-top: clamp(72px, 9vw, 88px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(10, 14, 24, 0.82);
+  backdrop-filter: blur(44px) saturate(180%);
+  -webkit-backdrop-filter: blur(44px) saturate(180%);
+  border-left: 1px solid transparent;
+  border-radius: var(--r-2xl) 0 0 var(--r-2xl);
+  transform: translate3d(100%, 0, 0);
+  visibility: hidden;
+  transition: transform 1s var(--ease-expo), visibility 0s 0.6s;
+}
+.detail-panel[data-open='true'] {
+  transform: translate3d(0, 0, 0);
+  visibility: visible;
+  transition: transform 1s var(--ease-expo), visibility 0s 0s;
+}
+
+/* The gradient hairline down the panel's leading edge */
+.detail-panel .panel-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    var(--peri),
+    rgba(122, 255, 207, 0.45) 53%,
+    rgba(188, 122, 255, 0) 97%
+  );
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .detail-panel { border-radius: var(--r-xl) 0 0 0; }
+}
+
+/* ═══ FACULTY / SHAPER CARDS ══════════════════════════════════════════════ */
+.person-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(24px, 3vw, 36px);
+  border-radius: var(--r-xl);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  overflow: hidden;
+  transition: transform 0.6s var(--ease-expo), border-color 0.4s var(--ease-soft),
+    box-shadow 0.6s var(--ease-expo);
+}
+.person-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--glass-brd-lit);
+  box-shadow: 0 34px 80px -28px rgba(0, 0, 0, 0.9);
+}
+
+.person-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent, var(--peri)), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* Monogram disc */
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  background: linear-gradient(140deg, var(--accent, var(--peri)), rgba(255, 255, 255, 0.9));
+  box-shadow: 0 10px 30px -10px var(--accent, var(--peri));
+}
+
+/* ═══ SOCIAL BUTTON ═══════════════════════════════════════════════════════ */
+.social-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-pill);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: transform 0.4s var(--ease-expo), color 0.3s var(--ease-soft),
+    border-color 0.3s var(--ease-soft), background 0.3s var(--ease-soft);
+}
+.social-btn:hover {
+  transform: translateY(-3px);
+  color: var(--text);
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-brd-lit);
+}
+
+/* ═══ DEPARTMENT CUBES ════════════════════════════════════════════════════
+   The roster display from the WinnerPagetemp reference: a field of glowing
+   blue boxes, one per team, that turn toward you on hover and open a detail
+   panel on click. Built with CSS 3D rather than a third WebGL context, so it
+   stays cheap next to the hero canvas and keeps the labels crisp/selectable.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cube-scene {
+  perspective: 1200px;
+  perspective-origin: 50% 38%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: clamp(10px, 1.6vw, 22px);
+}
+
+.cube-cell {
+  --cube: clamp(96px, 11vw, 132px);
+  --accent: #72afff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 30px 14px 22px;
+  border-radius: var(--r-lg);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.45s var(--ease-soft), border-color 0.45s var(--ease-soft),
+    transform 0.6s var(--ease-expo);
+}
+
+.cube-cell:hover,
+.cube-cell[data-active='true'] {
+  background: var(--glass-bg);
+  border-color: var(--glass-brd);
+  transform: translateY(-5px);
+}
+
+/* Pool of light the box sits in */
+.cube-cell::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: calc(30px + var(--cube) * 0.78);
+  width: calc(var(--cube) * 1.15);
+  height: calc(var(--cube) * 0.38);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%);
+  filter: blur(11px);
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease-soft);
+}
+.cube-cell:hover::after,
+.cube-cell[data-active='true']::after { opacity: 0.95; }
+
+.cube-stage {
+  display: block;
+  position: relative;
+  width: var(--cube);
+  height: var(--cube);
+  transform-style: preserve-3d;
+  animation: float-y 7s ease-in-out infinite;
+}
+
+.cube3d {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(-20deg) rotateY(28deg);
+  transition: transform 1.05s var(--ease-expo);
+}
+
+.cube-cell:hover .cube3d,
+.cube-cell[data-active='true'] .cube3d {
+  transform: rotateX(-9deg) rotateY(-12deg) scale(1.06);
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--accent) 30%, transparent),
+    color-mix(in srgb, var(--accent) 8%, transparent) 55%,
+    color-mix(in srgb, var(--accent) 22%, transparent)
+  );
+  box-shadow: inset 0 0 36px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.f-front  { transform: translateZ(calc(var(--cube) / 2)); }
+.f-back   { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
+.f-right  { transform: rotateY(90deg)  translateZ(calc(var(--cube) / 2)); }
+.f-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
+.f-top    { transform: rotateX(90deg)  translateZ(calc(var(--cube) / 2)); }
+.f-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
+
+/* Lit-from-within core */
+.cube-core {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 85%, white), transparent 68%);
+  filter: blur(9px);
+  opacity: 0.65;
+  transform: translateZ(0);
+  pointer-events: none;
+  transition: opacity 0.5s var(--ease-soft);
+}
+.cube-cell:hover .cube-core,
+.cube-cell[data-active='true'] .cube-core { opacity: 1; }
+
+.cube-emoji {
+  font-size: calc(var(--cube) * 0.36);
+  line-height: 1;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5));
+}
+
+/* Count chip riding the front face */
+.cube-count {
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 7px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--ink-2);
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube-stage { animation: none; }
+}
+
+/* ═══ WINNERS PAGE ════════════════════════════════════════════════════════ */
+
+.winners-stage {
+  position: relative;
+  width: 100%;
+  height: clamp(380px, 62vh, 660px);
+  margin-bottom: clamp(34px, 5vw, 60px);
+  /* The reference build sits its cubes on near-black. Kept light enough that
+     the water caustics behind still read through — at 0.92 it was opaque
+     enough to erase them completely. */
+  background: radial-gradient(70% 70% at 50% 45%, rgba(5, 5, 5, 0.6), transparent 78%);
+}
+
+.winners-stage canvas { touch-action: pan-y; }
+
+.winners-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 0.58rem;
+  pointer-events: none;
+  opacity: 0.55;
+  animation: soft-pulse 3.4s ease-in-out infinite;
+}
+
+.winners-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: 10px;
+}
+
+.legend-chip {
+  --accent: var(--peri);
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 16px;
+  text-align: left;
+  border-radius: var(--r-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  cursor: pointer;
+  transition: transform 0.5s var(--ease-expo), border-color 0.35s var(--ease-soft),
+    background 0.35s var(--ease-soft);
+}
+
+.legend-chip:hover,
+.legend-chip[data-active='true'] {
+  transform: translateY(-3px);
+  background: var(--glass-bg-strong);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.legend-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.legend-count {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ═══ WINNERS — FULL-BLEED CUBE FIELD ═════════════════════════════════════
+   The field owns the whole viewport. Title and team rail float on top of it
+   and clear out of the way when a team is picked, so the spinning cube and
+   its panel get the frame to themselves.
+   ═════════════════════════════════════════════════════════════════════════ */
+.winners-title {
+  left: clamp(20px, 5vw, 76px);
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: min(420px, 42vw);
+  pointer-events: none;
+  transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+}
+.winners-title[data-hidden='true'] {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-26px);
+}
+
+.winners-rail {
+  position: fixed;
+  z-index: 2;
+  right: clamp(20px, 4vw, 44px);
+  bottom: clamp(64px, 9vh, 96px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(260px, 34vw);
+  transition: opacity 0.5s var(--ease-expo), transform 0.5s var(--ease-expo);
+}
+.winners-rail[data-hidden='true'] {
+  opacity: 0;
+  transform: translateX(26px);
+  pointer-events: none;
+}
+.winners-rail .legend-chip { padding: 10px 14px; gap: 11px; }
+.winners-rail .legend-title { font-size: 0.79rem; }
+
+.winners-footer {
+  position: fixed;
+  z-index: 2;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  justify-content: space-between;
+  padding: 0 clamp(20px, 5vw, 76px) clamp(18px, 2.6vw, 28px);
+  pointer-events: none;
+}
+.winners-footer a { pointer-events: auto; }
+
+/* Below the split the field can't carry a side-by-side layout: the title goes
+   to the top and the rail becomes a horizontal scroller under it. */
+@media (max-width: 900px) {
+  .winners-title {
+    top: clamp(88px, 13vh, 130px);
+    transform: none;
+    max-width: none;
+    right: clamp(20px, 5vw, 76px);
+  }
+  .winners-title[data-hidden='true'] {
+    transform: translateY(-20px);
+  }
+  .winners-title p { max-width: none; }
+
+  .winners-rail {
+    left: 0;
+    right: 0;
+    bottom: clamp(52px, 8vh, 76px);
+    width: auto;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px clamp(20px, 5vw, 76px);
+    scrollbar-width: none;
+  }
+  .winners-rail::-webkit-scrollbar { display: none; }
+  .winners-rail .legend-chip { flex: 0 0 auto; }
+}
+
+/* ═══ KEYFRAMES ═══════════════════════════════════════════════════════════ */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.86); }
+}
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sheen-sweep {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
