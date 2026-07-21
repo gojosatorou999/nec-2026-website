@@ -419,7 +419,11 @@ h1, h2, h3, h4 {
   flex-direction: column;
   justify-content: center;
   gap: clamp(18px, 2.6vh, 30px);
-  padding: clamp(76px, 10vh, 96px) 0 clamp(24px, 4vh, 44px);
+  /* Bottom padding deliberately exceeds the top so the centred block is biased
+     upward. The deck reserves headroom above the cards for the pile to lift
+     into, which otherwise pushes the cards themselves below the optical centre
+     and crowds them against the bottom edge. */
+  padding: clamp(70px, 9vh, 90px) 0 clamp(48px, 8vh, 96px);
 }
 
 .stack-header {
@@ -435,7 +439,10 @@ h1, h2, h3, h4 {
   flex: 0 1 auto;
   display: grid;
   place-items: center;
-  padding-top: 78px;
+  /* Headroom for the buried cards, which lift up behind the front one.
+     Sized by StickyStack from the card count — a fixed value clipped the
+     deepest card of any stack with more than three. */
+  padding-top: var(--stack-headroom, 90px);
   min-height: 0;
 }
 
@@ -450,7 +457,8 @@ h1, h2, h3, h4 {
    tighten, rather than letting the front card overflow the pin. */
 @media (max-height: 860px) {
   .stack-pin {
-    padding-top: clamp(64px, 8vh, 80px);
+    padding-top: clamp(58px, 7vh, 72px);
+    padding-bottom: clamp(38px, 6vh, 64px);
     gap: 14px;
   }
   .stack-header h2 {
@@ -458,7 +466,8 @@ h1, h2, h3, h4 {
     margin-top: 10px !important;
   }
   .stack-header p { display: none; }
-  .stack-deck { padding-top: 62px; }
+  /* headroom stays driven by --stack-headroom; shrinking it here clipped the
+     deepest card on short viewports */
   .stack-card {
     padding: 20px 26px;
     gap: 12px;
@@ -466,13 +475,35 @@ h1, h2, h3, h4 {
   .stack-card p { font-size: 0.9rem !important; line-height: 1.6 !important; }
 }
 
-/* ═══ REDIRECT TILE ═══════════════════════════════════════════════════════
-   Stands in for a section and hands off to its own page. Shares the decks'
-   easing and lift so the whole page reads as one motion language.
+/* ═══ REDIRECT TILE — Scroll-Pinned ═══════════════════════════════════════
+   A sticky-pinned rail that holds the tile centred while the user scrolls
+   through, revealing inner elements in a staggered cascade and fading the
+   tile out as they leave. Matches the StickyStack motion language.
    ═════════════════════════════════════════════════════════════════════════ */
-.redirect-section {
+
+/* The outer rail gives the browser something to scroll through. */
+.redirect-rail {
   position: relative;
-  padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 80px);
+  height: 200svh;                    /* one screen of scroll room */
+  padding: 0 clamp(20px, 6vw, 80px);
+}
+
+/* The pin: centred inside the rail, holds still. */
+.redirect-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* Every child that participates in the staggered cascade starts hidden. */
+.redirect-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  will-change: transform, opacity;
 }
 
 .redirect-tile {
@@ -483,6 +514,7 @@ h1, h2, h3, h4 {
   align-items: center;
   gap: clamp(28px, 4vw, 62px);
   max-width: 1240px;
+  width: 100%;
   margin: 0 auto;
   padding: clamp(30px, 4.4vw, 58px);
   border-radius: var(--r-2xl);
@@ -494,10 +526,9 @@ h1, h2, h3, h4 {
     0 34px 80px -28px rgba(0, 0, 0, 0.95);
   overflow: hidden;
 
-  /* Opacity and transform are written inline by RedirectTile from scroll
-     position; only the hover affordances transition here. */
+  /* Start hidden — JS drives opacity/transform from scroll position */
   opacity: 0;
-  transform: translateY(46px) scale(0.97);
+  transform: translateY(60px) scale(0.96);
   transition: border-color 0.4s var(--ease-soft), box-shadow 0.6s var(--ease-expo);
   will-change: transform, opacity;
 }
@@ -514,7 +545,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08) inset,
     0 40px 90px -26px rgba(0, 0, 0, 0.95);
 }
-.redirect-tile:hover .redirect-cta { transform: translateY(-2px); }
+.redirect-tile:hover .redirect-cta { transform: translateY(-2px) !important; }
 
 .redirect-title {
   margin-top: 16px;
@@ -556,6 +587,30 @@ h1, h2, h3, h4 {
   }
   .redirect-stats { flex-wrap: wrap; }
 }
+
+/* On small screens the rail shortens so it's not punishing to scroll past */
+@media (max-width: 860px) {
+  .redirect-rail { height: 170svh; }
+}
+
+/* Reduced motion: no pin, no animation, just show everything */
+@media (prefers-reduced-motion: reduce) {
+  .redirect-rail { height: auto; }
+  .redirect-pin {
+    position: static;
+    height: auto;
+    padding: clamp(56px, 8vw, 104px) 0;
+  }
+  .redirect-tile {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .redirect-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 
 /* Narrow viewports drop the pin — a deck needs room a phone hasn't got. */
 .stack[data-stacked='false'] {

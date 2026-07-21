@@ -23,12 +23,22 @@ import { Children, useEffect, useRef } from 'react';
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
+// How far each buried card peeks out above the one in front. The deck reserves
+// headroom from this and the card count, so a four-card stack gets more room
+// than a three-card one — with a fixed reservation the deepest card lifted
+// straight out of the frame and got clipped.
+const LIFT = 34;
+
 export default function StickyStack({
   children,
   header = null,
   perCard = 26, // vh of scroll each card after the first gets to land in
   maxWidth = 900,
   minWidth = 861,
+  // A pinned deck has to fit one screen. Below this the pin is dropped and the
+  // cards become a plain column — better than shrinking real copy to nothing
+  // to force a four-card pile into a short window.
+  minHeight = 640,
   className = '',
 }) {
   const rootRef = useRef(null);
@@ -78,7 +88,7 @@ export default function StickyStack({
         for (let j = i + 1; j < list.length; j++) depth += arrival[j];
 
         const enter = (1 - t) * 150; // rises into place from below
-        const lift = depth * 46; // buried cards peek out above the front one
+        const lift = depth * LIFT; // buried cards peek out above the front one
         el.style.transform = `translateY(${enter - lift}px) scale(${1 - depth * 0.055})`;
         // opacity leads the movement so a card is readable while it travels
         el.style.opacity = String(clamp01(t * 1.8));
@@ -93,7 +103,9 @@ export default function StickyStack({
       if (!raf) raf = requestAnimationFrame(update);
     };
 
-    const mq = window.matchMedia(`(min-width: ${minWidth}px)`);
+    const mq = window.matchMedia(
+      `(min-width: ${minWidth}px) and (min-height: ${minHeight}px)`
+    );
     const applyMode = () => {
       enabled = mq.matches;
       root.dataset.stacked = String(enabled);
@@ -112,7 +124,7 @@ export default function StickyStack({
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, [minWidth, count]);
+  }, [minWidth, minHeight, count]);
 
   return (
     <div
@@ -121,6 +133,8 @@ export default function StickyStack({
       style={{
         '--stack-rail': `${100 + Math.max(0, count - 1) * perCard}svh`,
         '--stack-max': `${maxWidth}px`,
+        // exactly the room the deepest card needs to lift into, plus a margin
+        '--stack-headroom': `${Math.max(0, count - 1) * LIFT + 22}px`,
       }}
     >
       <div className="stack-pin">
