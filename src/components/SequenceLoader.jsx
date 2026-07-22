@@ -45,7 +45,6 @@ export default function SequenceLoader({ onComplete }) {
       const img = images[i];
       if (!img || !ctx) return;
 
-      // cover-fit, matching the source project's canvas sizing
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -55,11 +54,26 @@ export default function SequenceLoader({ onComplete }) {
         canvas.style.width = `${w}px`;
         canvas.style.height = `${h}px`;
       }
-      const scale = Math.max((w * dpr) / img.width, (h * dpr) / img.height);
+      const cw = canvas.width;
+      const ch = canvas.height;
+
+      // The clip is 16:9 landscape and the "iDEA INCUBATOR MGIT" lockup runs
+      // the full width of the frame. Cover-fitting it on a portrait phone
+      // scales to fill height and crops the sides off — the lockup loses its
+      // ends and it reads as a zoomed-in landscape still. So: cover while the
+      // viewport is at least as wide as the frame, but on a narrower (portrait)
+      // screen fit to width instead, letterboxed top and bottom against the
+      // ink the frames are already graded onto, so the whole logo is shown.
+      const imgAspect = img.width / img.height;
+      const viewAspect = cw / ch;
+      const scale =
+        viewAspect >= imgAspect
+          ? Math.max(cw / img.width, ch / img.height) // wide: cover
+          : cw / img.width; // portrait: fit width
       const dw = img.width * scale;
       const dh = img.height * scale;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     };
 
     const finish = () => {

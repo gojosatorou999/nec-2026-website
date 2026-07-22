@@ -19,9 +19,8 @@ export default function DelegationSection() {
           Meet the <span className="gradient-text">{DELEGATES.length} winners</span>
         </>
       }
-      body="Selected from the Idea Incubator cohort at MGIT and split across the club’s
-        seven teams. They get their own page — an interactive field of glass cubes, one
-        per team."
+      body="Selected from MGIT and the Idea Incubator cohort, split across the club’s
+        seven teams.Check them out here."
       cta="View the winners"
       accent="var(--mint)"
       stats={[

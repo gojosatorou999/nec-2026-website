@@ -376,6 +376,16 @@ h1, h2, h3, h4 {
   will-change: opacity, transform;
 }
 
+/* The captions are nowrap so they can't reflow mid-fade; on the very narrowest
+   phones the wide tracking pushes the longest one past the edge, so tighten it
+   there rather than let it clip. */
+@media (max-width: 360px) {
+  .hero-caption {
+    letter-spacing: 0.1em;
+    font-size: clamp(0.92rem, 4.4vw, 1.2rem);
+  }
+}
+
 .credit-name {
   font-family: var(--font-display);
   font-size: 0.88rem;

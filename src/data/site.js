@@ -42,7 +42,7 @@ export const ABOUT_ENTITIES = [
     id: 'ecell',
     kicker: 'The Host',
     title: 'E-Cell, IIT Bombay',
-    lede: 'Asia’s largest student-run entrepreneurship body',
+    lede: 'Asia’s largest student run entrepreneurship body',
     accent: 'var(--mint)',
     body: [
       'The Entrepreneurship Cell (E-Cell) of IIT Bombay has been inspiring Entrepreneurs since 1998 and is Asia’s largest student-run entrepreneurship-promoting Non-Profit Organization as designated by Thomson Reuters.',
@@ -82,7 +82,7 @@ export const ABOUT_CARDS = [
     kicker: 'The Event',
     title: 'Asia’s largest business model competition',
     body:
-      'The National Entrepreneurship Challenge is E-Cell IIT Bombay’s flagship contest, run across hundreds of campuses nationwide. Teams take an idea from a one-line premise to a defensible business model, then pitch it against the best student founders in the country.',
+      'The National Entrepreneurship Challenge is E-Cell IIT Bombay’s flagship contest, run across hundreds of campuses nationwide. Teams take an idea from a one line premise to a defensible business model, then pitch it against the best student founders in the country.',
     accent: 'var(--peri)',
     stat: { value: '2026', label: 'Edition' },
   },
@@ -115,7 +115,7 @@ export const ABOUT_CARDS = [
 export const MENTORS = [
   {
     id: 'principal',
-    name: 'Prof. G. Chandra Mohan Reddy',
+    name: 'Prof. G. Chandramohan Reddy',
     honorific: 'Principal · Founder of the club',
     org: 'Mahatma Gandhi Institute of Technology',
     accent: 'var(--sky)',
@@ -139,7 +139,7 @@ export const MENTORS = [
   },
   {
     id: 'rajnikanth',
-    name: 'Dr. T V Rajini Kanth',
+    name: 'Dr. T. V. Rajinikanth',
     honorific: 'Professor & Convener, R&D Committee · Head, CSE',
     org: 'MGIT',
     accent: 'var(--peri)',
@@ -157,28 +157,20 @@ export const MENTORS = [
 export const SHAPERS = [
   {
     id: 'varun',
-    name: 'Varun R',
+    name: 'Ramavath Varun',
     role: 'Campus Ambassador, E-Cell IIT Bombay · Dev Head, Idea Incubator',
     accent: 'var(--peri)',
-    initials: 'V',
+    initials: 'VR',
     body:
       'Runs the technical side of the club. As campus ambassador he is the direct line between MGIT and E-Cell IIT Bombay.', // TODO_VERIFY — draft copy
   },
-  {
-    id: 'nivas',
-    name: 'Nivas',
-    role: 'Co-Head, Idea Incubator',
-    accent: 'var(--mint)',
-    initials: 'N',
-    body:
-      'Co-leads the club day to day — operations, member pipeline, and keeping the selection process honest and organised.', // TODO_VERIFY — draft copy
-  },
+
   {
     id: 'vaishnavi',
     name: 'Vaishnavi G',
     role: 'Campus Ambassador, E-Cell IIT Bombay',
     accent: 'var(--violet)',
-    initials: 'Va',
+    initials: 'VG',
     body:
       'Carries IIT Bombay’s programming onto campus and drove the outreach that turned NEC from an announcement into a full delegation.', // TODO_VERIFY — draft copy
   },
@@ -190,6 +182,15 @@ export const SHAPERS = [
     initials: 'B',
     body:
       'Leads Idea Incubator. Set the direction for the NEC 2026 campaign and holds the club to the standard that made this delegation possible.', // TODO_VERIFY — draft copy
+  },
+  {
+    id: 'nivas',
+    name: 'Nivas Salla',
+    role: 'Co-Head, Idea Incubator',
+    accent: 'var(--mint)',
+    initials: 'NS',
+    body:
+      'Co leads the club day to day in operations, member pipeline, and keeping the selection process honest and organised.', // TODO_VERIFY — draft copy
   },
 ];
 

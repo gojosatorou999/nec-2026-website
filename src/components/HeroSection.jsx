@@ -207,8 +207,8 @@ export default function HeroSection() {
               lineHeight: 1.72,
             }}
           >
-            The National Entrepreneurship Challenge — Asia&rsquo;s largest business model
-            competition. Twenty-five from MGIT are going to Powai.
+            The National Entrepreneurship Challenge, Asia&rsquo;s largest business model
+            competition. Twenty five from MGIT are going to Powai.
           </p>
         </div>
 
@@ -311,7 +311,7 @@ export default function HeroSection() {
                 className="eyebrow hero-scroll-cue"
                 style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: '0.6rem' }}
               >
-                Scroll to dismantle
+                Scroll to explore
                 <span
                   aria-hidden="true"
                   style={{

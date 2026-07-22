@@ -29,15 +29,17 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 // straight out of the frame and got clipped.
 const LIFT = 34;
 
+// Below this fit scale the stack is abandoned for a plain column. A pinned deck
+// scaled smaller than this reads as unwelcome tiny text rather than a stack —
+// better to lay the cards out full size and let the page scroll. This is what
+// gates mobile: a roomy phone stacks, a cramped one falls back.
+const MIN_FIT = 0.5;
+
 export default function StickyStack({
   children,
   header = null,
   perCard = 26, // vh of scroll each card after the first gets to land in
   maxWidth = 900,
-  minWidth = 861,
-  // Only genuinely tiny windows drop the pin. Everything above this keeps the
-  // stack and scales the deck to fit instead — see fitDeck().
-  minHeight = 480,
   className = '',
 }) {
   const rootRef = useRef(null);
@@ -47,7 +49,13 @@ export default function StickyStack({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Reduced motion: no pin, no scroll animation — lay the cards out as the
+    // plain column. Without this the default stacked layout leaves every card
+    // overlapping in one cell with nothing to animate them apart.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      root.dataset.stacked = 'false';
+      return;
+    }
 
     let raf = 0;
     let enabled = false;
@@ -68,21 +76,26 @@ export default function StickyStack({
     };
 
     /**
-     * Scale the deck down to whatever room the pin actually has.
+     * Decide whether to stack, and if so scale the deck to fit the pin.
      *
-     * The alternative was to drop the pin on short viewports, which silently
-     * removed the stacking effect people had asked for. This keeps the stack
-     * at every size and shrinks it to fit instead — the tallest card plus the
-     * headroom the pile lifts into, measured against the space left after the
-     * heading. Transforms don't affect layout, so the deck's box is pulled in
-     * by the same amount to keep the flex centring honest.
+     * The fit itself is the gate — not a viewport-width breakpoint, which is
+     * what used to unstack the whole thing on phones. The deck is measured in
+     * its stacked layout; if it fits at a usable scale (>= MIN_FIT) it stacks,
+     * scaled to whatever room the pin has, and the layout box is pulled in by
+     * the same amount so the flex centring stays honest (transforms don't
+     * affect layout). If it can't, we drop to the plain column the CSS
+     * fallback provides — full-size, readable, just not pinned.
+     *
+     * Returns whether the stack is active.
      */
     const fitDeck = () => {
       const pin = root.querySelector(':scope .stack-pin');
       const deck = root.querySelector(':scope .stack-deck');
       const header = root.querySelector(':scope .stack-header');
-      if (!pin || !deck) return;
+      if (!pin || !deck) return false;
 
+      // Measure in the stacked layout regardless of the current mode.
+      root.dataset.stacked = 'true';
       deck.style.transform = 'none';
       deck.style.marginBottom = '0px';
 
@@ -94,9 +107,18 @@ export default function StickyStack({
         (header ? header.offsetHeight + (parseFloat(cs.rowGap) || 0) : 0);
 
       const need = deck.offsetHeight; // headroom + the tallest card
-      if (need <= 0 || avail <= 0) return;
+      if (need <= 0 || avail <= 0) return true;
 
       const k = Math.min(1, avail / need);
+
+      if (k < MIN_FIT) {
+        // Not worth pinning — hand back to the plain column.
+        deck.style.transform = '';
+        deck.style.marginBottom = '';
+        root.dataset.stacked = 'false';
+        return false;
+      }
+
       if (k < 0.999) {
         deck.style.transform = `scale(${k})`;
         deck.style.marginBottom = `${-need * (1 - k)}px`;
@@ -104,6 +126,7 @@ export default function StickyStack({
         deck.style.transform = '';
         deck.style.marginBottom = '';
       }
+      return true;
     };
 
     const update = () => {
@@ -146,57 +169,39 @@ export default function StickyStack({
       if (!raf) raf = requestAnimationFrame(update);
     };
 
-    const mq = window.matchMedia(
-      `(min-width: ${minWidth}px) and (min-height: ${minHeight}px)`
-    );
+    // Re-decide from the current fit, then paint. Runs on load, resize, font
+    // and image settle — anything that changes how tall the cards are.
     const applyMode = () => {
-      enabled = mq.matches;
-      root.dataset.stacked = String(enabled);
-      if (enabled) {
-        fitDeck();
-        update();
-      } else {
-        clear();
-      }
-    };
-
-    const onResize = () => {
-      if (enabled) fitDeck();
-      onScroll();
+      enabled = fitDeck();
+      if (enabled) update();
+      else clear();
     };
 
     applyMode();
 
     // Card height depends on the webfont, so refit once it lands — measuring
-    // against fallback metrics leaves the scale slightly wrong.
+    // against fallback metrics leaves the scale (and the stack/column call)
+    // slightly wrong.
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => {
-        if (enabled) {
-          fitDeck();
-          update();
-        }
-      });
+      document.fonts.ready.then(applyMode);
     }
 
     // Images inside cards (the mentor portraits) also change the height.
     const imgs = Array.from(root.querySelectorAll('img'));
-    const onImg = () => enabled && (fitDeck(), update());
     imgs.forEach((img) => {
-      if (!img.complete) img.addEventListener('load', onImg, { once: true });
+      if (!img.complete) img.addEventListener('load', applyMode, { once: true });
     });
 
-    mq.addEventListener('change', applyMode);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', applyMode);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      mq.removeEventListener('change', applyMode);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
-      imgs.forEach((img) => img.removeEventListener('load', onImg));
+      window.removeEventListener('resize', applyMode);
+      imgs.forEach((img) => img.removeEventListener('load', applyMode));
     };
-  }, [minWidth, minHeight, count]);
+  }, [count]);
 
   return (
     <div
