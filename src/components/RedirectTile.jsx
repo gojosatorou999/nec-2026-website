@@ -15,7 +15,6 @@ import { IconArrow } from './BrandLogo';
 
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-const easeInCubic = (t) => t * t * t;
 
 export default function RedirectTile({
   id,
@@ -70,45 +69,24 @@ export default function RedirectTile({
       // p goes 0→1 as the rail scrolls past
       const p = clamp01(-rect.top / scrollable);
 
-      /* ─── Tile entrance: 0→0.22 of rail ─── */
-      const enterT = easeOutCubic(clamp01(p / 0.22));
+      /* Entrance only, then hold. There is deliberately NO fade-out: the tile
+         stays fully visible and simply scrolls away when the sticky pin
+         releases. The old exit fade was the cause of both problems — it made
+         the tile flash out early (glitchy on a short rail) and it left an empty
+         pinned screen between one tile and the next (the "big gap"). */
+      // Fade in over a wide slice of the rail so it is a smooth ramp, not a
+      // pop. On a 135svh rail this is ~0.4 of a screen of scroll.
+      const enterT = easeOutCubic(clamp01(p / 0.55));
+      tile.style.opacity = String(enterT);
+      tile.style.transform = `translateY(${(1 - enterT) * 42}px) scale(${0.98 + enterT * 0.02})`;
 
-      /* ─── Tile exit: 0.88→1.0 of rail ───
-         Entrance shortened and exit pushed late on purpose: the tile now
-         settles sooner and holds far longer, so there is time to read it
-         instead of it sliding away as you arrive. */
-      const exitT = easeInCubic(clamp01((p - 0.88) / 0.12));
-
-      /* Combined tile opacity and transform */
-      const tileOpacity = clamp01(enterT - exitT);
-      const tileY = (1 - enterT) * 60 + exitT * -40;
-      const tileScale = 0.96 + enterT * 0.04 - exitT * 0.02;
-
-      tile.style.opacity = String(tileOpacity);
-      tile.style.transform = `translateY(${tileY}px) scale(${tileScale})`;
-
-      /* ─── Staggered inner reveals: each element gets a slice ─── */
-      const staggerStart = 0.06;
-      const staggerEnd = 0.42;
-      const staggerRange = staggerEnd - staggerStart;
-      const sliceWidth = 0.2; // each element's transition window
-
+      /* Staggered inner reveal — cascades in step with the container fade. */
       for (let i = 0; i < parts.length; i++) {
         const el = parts[i];
-        const sliceStart = staggerStart + (i / Math.max(1, parts.length - 1)) * (staggerRange - sliceWidth);
-        const sliceP = clamp01((p - sliceStart) / sliceWidth);
-        const eased = easeOutCubic(sliceP);
-
-        // Exit stagger (slightly later for earlier elements, creating a sweep)
-        const exitSliceStart = 0.86 + (i / Math.max(1, parts.length - 1)) * 0.06;
-        const exitSliceP = clamp01((p - exitSliceStart) / 0.14);
-        const exitEased = easeInCubic(exitSliceP);
-
-        const elOpacity = clamp01(eased - exitEased);
-        const elY = (1 - eased) * 32 + exitEased * -20;
-
-        el.style.opacity = String(elOpacity);
-        el.style.transform = `translateY(${elY}px)`;
+        const start = 0.04 + (i / Math.max(1, parts.length - 1)) * 0.34;
+        const t = easeOutCubic(clamp01((p - start) / 0.3));
+        el.style.opacity = String(t);
+        el.style.transform = `translateY(${(1 - t) * 26}px)`;
       }
     };
 

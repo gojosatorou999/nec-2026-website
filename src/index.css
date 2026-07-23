@@ -498,7 +498,7 @@ h1, h2, h3, h4 {
 /* The outer rail gives the browser something to scroll through. */
 .redirect-rail {
   position: relative;
-  height: 120svh;                    /* ~0.2 screen of scroll past the pin — tighter gap between tiles */
+  height: 135svh;                    /* enough scroll to hold the tile, small gap to the next */
   padding: 0 clamp(20px, 6vw, 80px);
 }
 

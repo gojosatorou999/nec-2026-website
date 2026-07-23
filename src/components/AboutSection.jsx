@@ -19,7 +19,7 @@ export default function AboutSection() {
         </>
       }
       body="The competition, the host, the council it runs under, and the club sending
-        twenty-five people to Powai. Read how NEC, E-Cell IIT Bombay, the Institution’s
+        twenty-two people to Powai. Read how NEC, E-Cell IIT Bombay, the Institution’s
         Innovation Council and Idea Incubator fit together."
       cta="Read about us"
       accent="var(--peri)"

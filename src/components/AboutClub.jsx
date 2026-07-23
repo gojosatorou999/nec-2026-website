@@ -411,7 +411,7 @@ export default function AboutClub() {
                   }}
                 >
                   The competition, the host, the council it runs under, and the club
-                  sending twenty-five people to Powai.
+                  sending twenty-two people to Powai.
                 </p>
               </>
             }
