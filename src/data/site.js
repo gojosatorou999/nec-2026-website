@@ -18,7 +18,7 @@ export const NAV_LINKS = [
   { href: '/about.html', label: 'About', external: true },
   { href: '#delegation', label: 'Delegation' },
   { href: '#mentors', label: 'Mentors' },
-  { href: '#shapers', label: 'Shapers' },
+  { href: '#hosts', label: 'Hosts' },
   { href: '/timeline.html', label: 'Timeline', external: true },
 ];
 
@@ -89,11 +89,11 @@ export const ABOUT_CARDS = [
   {
     id: 'delegation',
     kicker: 'Our Delegation',
-    title: '25 selected to represent MGIT',
+    title: '22 selected to represent MGIT',
     body:
-      'Out of the whole Idea Incubator cohort, 25 members earned a place in the delegation travelling to IIT Bombay. They were picked on the strength of their ideation, research and pitching across our internal selection rounds.',
+      'Twenty-two students from across MGIT earned a place in the delegation travelling to IIT Bombay. They were picked on the strength of their ideation, research and pitching across our internal selection rounds.',
     accent: 'var(--mint)',
-    stat: { value: '25', label: 'Delegates' },
+    stat: { value: '22', label: 'Winners' },
   },
   {
     id: 'collab',
@@ -134,7 +134,7 @@ export const MENTORS = [
     initials: 'KS',
     photo: '/faculty/sabitha.png',
     body:
-      'The club’s closest faculty ally. She has shaped how Idea Incubator runs — reviewing pitches, opening doors across departments, and holding the standard that got 25 of our members selected. Much of what the club has become traces back to her steady involvement.', // TODO_VERIFY — draft copy
+      'The club’s closest faculty ally. She has shaped how Idea Incubator runs — reviewing pitches, opening doors across departments, and holding the standard that got 22 of our students selected. Much of what the club has become traces back to her steady involvement.', // TODO_VERIFY — draft copy
     tags: ['Faculty Coordinator', 'Mentor'],
   },
   {
@@ -151,37 +151,28 @@ export const MENTORS = [
   },
 ];
 
-/* ─── The Shapers — the four who built the club and the NEC campaign ────────
-   Deliberately kept OUT of the 25-delegate roster and placed at the end.
+/* ─── The Hosts — the three running NEC 2026 at MGIT ────────────────────────
+   Kept OUT of the 22-strong delegation roster and placed at the end.
    ─────────────────────────────────────────────────────────────────────────── */
-export const SHAPERS = [
+export const HOSTS = [
   {
     id: 'varun',
-    name: 'Ramavath Varun',
-    role: 'Campus Ambassador, E-Cell IIT Bombay · Dev Head, Idea Incubator',
+    name: 'R Varun',
+    role:
+      'Director, NEC 2026 · Development Head, Idea Incubator · Campus Ambassador, IIT Bombay',
     accent: 'var(--peri)',
-    initials: 'VR',
+    initials: 'RV',
     body:
-      'Runs the technical side of the club. As campus ambassador he is the direct line between MGIT and E-Cell IIT Bombay.', // TODO_VERIFY — draft copy
-  },
-
-  {
-    id: 'vaishnavi',
-    name: 'Vaishnavi G',
-    role: 'Campus Ambassador, E-Cell IIT Bombay',
-    accent: 'var(--violet)',
-    initials: 'VG',
-    body:
-      'Carries IIT Bombay’s programming onto campus and drove the outreach that turned NEC from an announcement into a full delegation.', // TODO_VERIFY — draft copy
+      'Directs NEC 2026 at MGIT and runs the technical side of Idea Incubator. As campus ambassador he is the direct line between MGIT and E-Cell IIT Bombay.',
   },
   {
     id: 'balaji',
     name: 'Balaji',
-    role: 'Club Head, Idea Incubator',
+    role: 'Team Leader · Club Head, Idea Incubator',
     accent: 'var(--sky)',
     initials: 'B',
     body:
-      'Leads Idea Incubator. Set the direction for the NEC 2026 campaign and holds the club to the standard that made this delegation possible.', // TODO_VERIFY — draft copy
+      'Leads the team and heads Idea Incubator. Set the direction for the NEC 2026 campaign and holds it to the standard that made this delegation possible.',
   },
   {
     id: 'nivas',
@@ -190,37 +181,66 @@ export const SHAPERS = [
     accent: 'var(--mint)',
     initials: 'NS',
     body:
-      'Co leads the club day to day in operations, member pipeline, and keeping the selection process honest and organised.', // TODO_VERIFY — draft copy
+      'Co-leads day to day — operations, the member pipeline, and keeping the selection process honest and organised.',
   },
 ];
 
-/* ─── The 25 delegates ───────────────────────────────────────────────────────
-   ⚠ TODO_VERIFY — real names not yet supplied. Replace `name`, `branch`,
-     `year` and `focus` for each entry. Structure is final; only data changes.
+/* ─── The 22 winners ─────────────────────────────────────────────────────────
+   The roster is authored per team below and flattened into DELEGATES, so the
+   team sizes can never drift out of step with the people in them the way a
+   separate `count` field did.
+
+   `role`   — 'Manager' for the team's manager, 'Delegate' for everyone else.
+   `branch` — branch and year, shown as supplied (e.g. 'CSD, 2nd Year').
    ─────────────────────────────────────────────────────────────────────────── */
-const FOCUS_POOL = [
-  'Product & Research',
-  'Business Modelling',
-  'Market Strategy',
-  'Pitch & Storytelling',
-  'Financial Modelling',
-  'Design & Prototyping',
-];
+const ROSTER = {
+  tech: [
+    { name: 'Rishanth Patkar', role: 'Manager', branch: 'CSE, 2nd Year' },
+    { name: 'Kyatham Vishwanath', role: 'Delegate', branch: 'CSD, 2nd Year' },
+    { name: 'Sai Chaitanya Kareda', role: 'Delegate', branch: 'CSD, 2nd Year' },
+  ],
+  marketing: [
+    { name: 'BVS Saranya', role: 'Manager', branch: 'MCT, 3rd Year' },
+    { name: 'Sai Amrutha Polu', role: 'Delegate', branch: 'CSE, 4th Year' },
+    { name: 'Ruthika Konkata', role: 'Delegate', branch: 'CSB, 3rd Year' },
+    { name: 'Advith Hruday Ravulapati', role: 'Delegate', branch: 'MCT, 2nd Year' },
+    { name: 'Niharika Bandi', role: 'Delegate', branch: 'CSB, 3rd Year' },
+  ],
+  design: [
+    { name: 'T Siddhartha Karthik', role: 'Manager', branch: 'CSE, 3rd Year' },
+    { name: 'Mriduhaasini', role: 'Delegate', branch: 'CSM, 2nd Year' },
+  ],
+  events: [
+    { name: 'Hasini Jella', role: 'Manager', branch: 'CSE, 3rd Year' },
+    { name: 'Harshita Vadde', role: 'Delegate', branch: 'CSM, 2nd Year' },
+    { name: 'Vishnu Ganesh M', role: 'Delegate', branch: 'MCT, 2nd Year' },
+  ],
+  pr: [
+    { name: 'Prisha Vishal Mistry', role: 'Manager', branch: 'CSD, 2nd Year' },
+    { name: 'Kanuri Sai Karthik', role: 'Delegate', branch: 'ECE, 3rd Year' },
+    { name: 'Indukuri Laasya Reddy', role: 'Delegate', branch: 'CSD, 2nd Year' },
+    { name: 'Sharan Mittapalli', role: 'Delegate', branch: 'CSD, 2nd Year' },
+    { name: 'Nooka Hemesh Reddy', role: 'Delegate', branch: 'CSD, 2nd Year' },
+    { name: 'Shreyash Nuguru', role: 'Delegate', branch: 'CSB, 2nd Year' },
+  ],
+  content: [
+    { name: 'Abhigna', role: 'Manager', branch: 'ECE, 2nd Year' },
+    { name: 'Vengala Venkata Sai Lohini', role: 'Delegate', branch: 'CSD, 2nd Year' },
+  ],
+  finance: [{ name: 'Hasini Suppala', role: 'Manager', branch: 'CSD, 2nd Year' }],
+};
 
-const BRANCH_POOL = ['CSE', 'CSE (AI&ML)', 'IT', 'ECE', 'EEE', 'MECH'];
-
-export const DELEGATES = Array.from({ length: 25 }, (_, i) => {
-  const n = i + 1;
-  return {
-    id: String(n).padStart(2, '0'),
-    name: `Delegate ${String(n).padStart(2, '0')}`, // TODO_VERIFY
-    branch: BRANCH_POOL[i % BRANCH_POOL.length], // TODO_VERIFY
-    year: ['2nd Year', '3rd Year', '4th Year'][i % 3], // TODO_VERIFY
-    focus: FOCUS_POOL[i % FOCUS_POOL.length], // TODO_VERIFY
-    body:
-      'Selected to represent Idea Incubator at the National Entrepreneurship Challenge 2026 at IIT Bombay, after clearing the club’s internal ideation and pitch rounds.', // TODO_VERIFY
-  };
-});
+let delegateNo = 0;
+const buildTeam = (teamId) =>
+  ROSTER[teamId].map((p) => {
+    delegateNo += 1;
+    return {
+      ...p,
+      id: String(delegateNo).padStart(2, '0'),
+      body:
+        'Selected to represent MGIT at the National Entrepreneurship Challenge 2026 at IIT Bombay, after clearing the internal ideation and pitch rounds.',
+    };
+  });
 
 /* ─── Departments ────────────────────────────────────────────────────────────
    Structure taken directly from the WinnerPagetemp reference build, which
@@ -230,46 +250,47 @@ export const DELEGATES = Array.from({ length: 25 }, (_, i) => {
      Events & Operations · PR & Sponsorship · Content & Documentation
      Finance & Administration
 
-   ⚠ TODO_VERIFY — the split of the 25 delegates across these teams is a
-     placeholder. Move people between `count`s once the real teams are known.
+   Team sizes are not stored — each team's `members` come straight from ROSTER
+   above, so the count shown is always the number of people actually listed.
    ─────────────────────────────────────────────────────────────────────────── */
 const DEPARTMENT_SPEC = [
   {
-    id: 'tech', emoji: '💻', title: 'Technology & Development', accent: '#72afff', count: 5,
-    blurb: 'Builds what the club ships — this site included. Prototypes, tooling and anything that needs to actually run.'
+    id: 'tech', emoji: '💻', title: 'Technology & Development', accent: '#72afff',
+    blurb: 'Builds what the team ships — this site included. Prototypes, tooling and anything that needs to actually run.'
   },
   {
-    id: 'marketing', emoji: '📢', title: 'Marketing & Community', accent: '#a3b2ff', count: 4,
-    blurb: 'Grows the room. Campus outreach, campaigns, and keeping the Idea Incubator community loud and active.'
+    id: 'marketing', emoji: '📢', title: 'Marketing & Community', accent: '#a3b2ff',
+    blurb: 'Grows the room. Campus outreach, campaigns, and keeping the MGIT community loud and active.'
   },
   {
-    id: 'design', emoji: '🎨', title: 'Design & Editors', accent: '#bc7aff', count: 4,
-    blurb: 'Sets how everything looks and reads — decks, posters, reels and the visual language of the club.'
+    id: 'design', emoji: '🎨', title: 'Design & Editors', accent: '#bc7aff',
+    blurb: 'Sets how everything looks and reads — decks, posters, reels and the visual language of the campaign.'
   },
   {
-    id: 'events', emoji: '🎯', title: 'Events & Operations', accent: '#7affcf', count: 4,
+    id: 'events', emoji: '🎯', title: 'Events & Operations', accent: '#7affcf',
     blurb: 'Runs the logistics. Sessions, competitions, travel and the hundred details that make an event happen.'
   },
   {
-    id: 'pr', emoji: '🤝', title: 'PR & Sponsorship', accent: '#ffd65c', count: 3,
-    blurb: 'Handles partners, sponsors and the club’s relationships outside MGIT — including with E-Cell IIT Bombay.'
+    id: 'pr', emoji: '🤝', title: 'PR & Sponsorship', accent: '#ffd65c',
+    blurb: 'Handles partners, sponsors and MGIT’s relationships outside campus — including with E-Cell IIT Bombay.'
   },
   {
-    id: 'content', emoji: '📝', title: 'Content & Documentation', accent: '#7fd4f5', count: 3,
-    blurb: 'Writes it all down. Case studies, recaps, research notes and the record of what the club has done.'
+    id: 'content', emoji: '📝', title: 'Content & Documentation', accent: '#7fd4f5',
+    blurb: 'Writes it all down. Case studies, recaps, research notes and the record of what the team has done.'
   },
   {
-    id: 'finance', emoji: '💰', title: 'Finance & Administration', accent: '#5bf1b0', count: 2,
+    id: 'finance', emoji: '💰', title: 'Finance & Administration', accent: '#5bf1b0',
     blurb: 'Keeps the books straight — budgets, reimbursements and the paperwork behind every trip and event.'
   },
 ];
 
-let cursor = 0;
-export const DEPARTMENTS = DEPARTMENT_SPEC.map((spec) => {
-  const members = DELEGATES.slice(cursor, cursor + spec.count);
-  cursor += spec.count;
-  return { ...spec, members };
-});
+export const DEPARTMENTS = DEPARTMENT_SPEC.map((spec) => ({
+  ...spec,
+  members: buildTeam(spec.id),
+}));
+
+/** All 22, in team order. */
+export const DELEGATES = DEPARTMENTS.flatMap((d) => d.members);
 
 /* ─── Social / external links ────────────────────────────────────────────────
    Dummy hrefs — swap `#` for the real URLs when available.

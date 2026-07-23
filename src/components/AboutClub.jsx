@@ -490,9 +490,13 @@ export default function AboutClub() {
           font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
           padding: 6px 14px; border-radius: 50px; margin-bottom: 20px; font-family: var(--font-mono);
         }
+        /* right:0, not right:-150px. Hanging it off the edge relied on
+           overflow-x clip on the root, which Safari only understands from
+           version 16 — on anything older it produced a sideways scroll. */
         .ab-glow {
-          position:absolute; right:-150px; top:40%; transform:translateY(-50%);
-          width:600px; height:600px; border-radius:50%; opacity:0.05; pointer-events:none;
+          position:absolute; right:0; top:40%; transform:translateY(-50%);
+          width:min(600px, 100%); height:600px; border-radius:50%;
+          opacity:0.05; pointer-events:none;
           background:radial-gradient(circle, var(--peri) 0%, transparent 70%);
         }
 

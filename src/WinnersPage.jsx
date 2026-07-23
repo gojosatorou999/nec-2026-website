@@ -116,7 +116,7 @@ function TeamPanel({ dept, onClose }) {
                         marginTop: 2,
                       }}
                     >
-                      {m.branch} · {m.year}
+                      {m.role} · {m.branch}
                     </span>
                   </span>
                 </li>
@@ -181,12 +181,12 @@ function WinnersBody() {
             lineHeight: 1.72,
           }}
         >
-          {DELEGATES.length} members of Idea Incubator, across seven teams, selected to
-          represent MGIT at the National Entrepreneurship Challenge 2026.
+          {DELEGATES.length} students from MGIT, across seven teams, selected to represent
+          the college at the National Entrepreneurship Challenge 2026.
         </p>
 
         <p className="eyebrow" style={{ marginTop: 26, color: 'var(--text-3)' }}>
-          Select a cube
+          Tap a glowing cube to meet the team
         </p>
       </div>
 

@@ -38,7 +38,9 @@ const MIN_FIT = 0.5;
 export default function StickyStack({
   children,
   header = null,
-  perCard = 26, // vh of scroll each card after the first gets to land in
+  // vh of scroll each card after the first gets. This is the read-speed dial:
+  // at 26 a card flew in and was buried again before it could be read.
+  perCard = 52,
   maxWidth = 900,
   className = '',
 }) {
@@ -143,7 +145,13 @@ export default function StickyStack({
       // Dividing by 0.9 lands the last card just before the pin releases, so it
       // isn't still arriving as the section leaves.
       const span = Math.max(1, list.length - 1) / 0.9;
-      const arrival = list.map((_, i) => easeOutCubic(clamp01(p * span - (i - 1))));
+      // Each card travels during the first ARRIVE of its slice and then rests
+      // for the remainder. Without the dwell, cards moved continuously for the
+      // whole rail and nothing ever sat still long enough to read.
+      const ARRIVE = 0.6;
+      const arrival = list.map((_, i) =>
+        easeOutCubic(clamp01((p * span - (i - 1)) / ARRIVE))
+      );
 
       for (let i = 0; i < list.length; i++) {
         const el = list[i];

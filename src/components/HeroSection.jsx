@@ -1,5 +1,5 @@
 import { useEffect, useRef, Suspense, lazy } from 'react';
-import { EVENT } from '../data/site';
+import { EVENT, DELEGATES } from '../data/site';
 import { IdeaIncubatorLogo, IconArrow } from './BrandLogo';
 
 const IdeaLogoScene = lazy(() => import('./IdeaLogoScene'));
@@ -208,7 +208,7 @@ export default function HeroSection() {
             }}
           >
             The National Entrepreneurship Challenge, Asia&rsquo;s largest business model
-            competition. Twenty five from MGIT are going to Powai.
+            competition. Twenty-two from MGIT are going to Powai.
           </p>
         </div>
 
@@ -253,7 +253,7 @@ export default function HeroSection() {
           }}
         >
           <a href="#delegation" className="btn btn-primary">
-            Meet the 25 <IconArrow />
+            Meet the {DELEGATES.length} <IconArrow />
           </a>
           <a href="#about" className="btn btn-ghost">
             About the challenge

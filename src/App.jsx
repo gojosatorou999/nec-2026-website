@@ -5,9 +5,10 @@ import HeroSection from './components/HeroSection';
 import AboutSection from './components/AboutSection';
 import MentorsSection from './components/MentorsSection';
 import DelegationSection from './components/DelegationSection';
-import ShapersSection from './components/ShapersSection';
+import HostsSection from './components/HostsSection';
 import Footer from './components/Footer';
 import WaterLayer from './components/WaterLayer';
+import { useAnchorScroll } from './components/useAnchorScroll';
 
 /*  Page order follows the flow a first-time visitor needs:
     what the event is → who's going → who backs them → who built it.
@@ -15,6 +16,7 @@ import WaterLayer from './components/WaterLayer';
     sit below the delegation so the members come before the faculty.  */
 function Site() {
   const [ready, setReady] = useState(false);
+  useAnchorScroll();
   const handleComplete = useCallback(() => setReady(true), []);
 
   return (
@@ -37,7 +39,7 @@ function Site() {
             <AboutSection />
             <DelegationSection />
             <MentorsSection />
-            <ShapersSection />
+            <HostsSection />
           </main>
 
           <Footer />

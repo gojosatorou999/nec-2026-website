@@ -1,20 +1,20 @@
-import { SHAPERS } from '../data/site';
+import { HOSTS } from '../data/site';
 import { useReveal } from './useReveal';
 import StickyStack from './StickyStack';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   THE SHAPERS
-   Varun, Nivas, Vaishnavi and Balaji — deliberately separated from the 25
-   delegates and placed last, as the people who built the club and ran the
-   NEC 2026 campaign rather than as part of the selected cohort.
+   THE HOSTS
+   Varun, Balaji and Nivas — deliberately separated from the 22 winners and
+   placed last, as the people hosting NEC 2026 at MGIT rather than as part of
+   the selected cohort.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export default function ShapersSection() {
+export default function HostsSection() {
   const revealRef = useReveal(80);
 
   return (
     <section
-      id="shapers"
+      id="hosts"
       ref={revealRef}
       style={{
         position: 'relative',
@@ -38,12 +38,12 @@ export default function ShapersSection() {
         <StickyStack
           header={
             <>
-              <div className="eyebrow">The Shapers</div>
+              <div className="eyebrow">The Hosts</div>
 
               <h2
                 style={{ marginTop: 16, fontSize: 'clamp(2rem, 4.6vw, 3.2rem)', fontWeight: 600 }}
               >
-                Who <span className="gradient-text">built this</span>
+                Who <span className="gradient-text">runs this</span>
               </h2>
 
               <p
@@ -54,14 +54,13 @@ export default function ShapersSection() {
                   lineHeight: 1.7,
                 }}
               >
-                Before there was a delegation, there was a club to run and a campaign to
-                make happen. These four hold Idea Incubator together and drove NEC 2026 at
-                MGIT.
+                Before there was a delegation, there was a campaign to make happen. These
+                three host NEC 2026 at MGIT and lead Idea Incubator.
               </p>
             </>
           }
         >
-          {SHAPERS.map((s) => (
+          {HOSTS.map((s) => (
             <article key={s.id} className="stack-card" style={{ '--accent': s.accent }}>
               <div className="monogram" aria-hidden="true">
                 {s.initials}

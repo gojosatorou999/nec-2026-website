@@ -19,10 +19,17 @@ export default function DelegationSection() {
           Meet the <span className="gradient-text">{DELEGATES.length} winners</span>
         </>
       }
-      body="Selected from MGIT and the Idea Incubator cohort, split across the club’s
-        seven teams.Check them out here."
+      body="Twenty-two students selected from across MGIT, split across seven teams.
+        Check them out here."
       cta="View the winners"
       accent="var(--mint)"
+      photo={{
+        src: '/images/winners-1400.jpg',
+        srcSet: '/images/winners-800.jpg 800w, /images/winners-1400.jpg 1400w',
+        alt: `The ${DELEGATES.length} MGIT students selected for NEC 2026, outside MGIT`,
+        width: 1400,
+        height: 1050,
+      }}
       stats={[
         { value: String(DELEGATES.length), label: 'Winners' },
         { value: String(DEPARTMENTS.length), label: 'Teams' },

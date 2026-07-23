@@ -38,9 +38,22 @@ const DEPT_CELLS = {
   finance: [3, -2],
 };
 
-const GRID_X = [-6, 8];
-const GRID_Z = [-5, 5];
-const FOCUS = new THREE.Vector3(1, 0, 0); // centre of the field
+/* Low-power devices get a smaller field and much cheaper glass. Seven
+   MeshTransmissionMaterials each cost their own render pass, which is what made
+   this page crawl on phones. `deviceMemory` is the direct signal for the 4GB
+   handsets this has to run on; the others are fallbacks for browsers that
+   don't expose it. */
+const LOW_POWER =
+  typeof navigator !== 'undefined' &&
+  ((navigator.deviceMemory && navigator.deviceMemory <= 4) ||
+    (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+    (typeof window !== 'undefined' &&
+      window.matchMedia?.('(pointer: coarse)').matches));
+
+const GRID_X = LOW_POWER ? [-3, 5] : [-6, 8];
+const GRID_Z = LOW_POWER ? [-3, 3] : [-5, 5];
+// centroid of the seven live cubes, so the cluster sits centred in frame
+const FOCUS = new THREE.Vector3(1.43, 0, -0.43);
 
 const CUBE = 0.9; // leaves a visible gutter at 1.0 spacing
 const SPIN_TIME = 2.0;
@@ -108,6 +121,42 @@ function useIconTexture(deptId, colorStr) {
 
     return tex;
   }, [deptId, colorStr]);
+}
+
+/** Renders a team name to a canvas so it can float under its cube.
+ *  The cubes on their own gave no clue they were clickable — a name and a
+ *  "tap" cue is the cheapest way to make the field self-explanatory. */
+function useLabelTexture(text, colorStr) {
+  return useMemo(() => {
+    const w = 512;
+    const h = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = '600 54px Sora, system-ui, sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(text, w / 2, h / 2 - 8);
+
+    ctx.shadowBlur = 8;
+    ctx.font = '500 26px "JetBrains Mono", ui-monospace, monospace';
+    ctx.fillStyle = colorStr || '#a3b2ff';
+    const verb = window.matchMedia?.('(pointer: coarse)').matches ? 'TAP' : 'CLICK';
+    ctx.fillText(`${verb} TO OPEN`, w / 2, h / 2 + 40);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }, [text, colorStr]);
 }
 
 /* ── The dark field the team cubes sit in ────────────────────────────────── */
@@ -190,7 +239,10 @@ function FillerField({ geometry, anySelected }) {
 function DeptCube({ dept, geometry, selectedId, onSelect }) {
   const groupRef = useRef();
   const innerRef = useRef();
+  const labelRef = useRef();
+  const haloRef = useRef();
   const tex = useIconTexture(dept.id, dept.accent);
+  const labelTex = useLabelTexture(dept.title.split(' & ')[0], dept.accent);
 
   const cell = DEPT_CELLS[dept.id] ?? [0, 0];
   const isSelected = selectedId === dept.id;
@@ -237,9 +289,25 @@ function DeptCube({ dept, geometry, selectedId, onSelect }) {
     // idle float, damped out once the cube is the centre of attention
     const idle = (1 - p) * appear * (1 - e);
     g.position.y += Math.sin(state.clock.elapsedTime * 1.6 + cell[0] * 1.7) * 0.045 * idle;
+
+    // Attract cue: while nothing is chosen the halo breathes, so the seven
+    // live cubes read as buttons rather than as scenery.
+    const pulse = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 2 + cell[0] * 0.9);
+    if (haloRef.current) {
+      const show = idle * (selectedId ? 0 : 1);
+      haloRef.current.material.opacity = (0.18 + pulse * 0.22) * show;
+      const s = 1 + pulse * 0.12;
+      haloRef.current.scale.set(s, s, s);
+    }
+    // Labels belong to the browsing state only — once a team is open the
+    // sidebar names it, so they would just be noise.
+    if (labelRef.current) {
+      labelRef.current.material.opacity = idle * (selectedId ? 0 : 1);
+    }
   });
 
   useEffect(() => () => tex?.dispose(), [tex]);
+  useEffect(() => () => labelTex?.dispose(), [labelTex]);
 
   return (
     <group ref={groupRef}>
@@ -258,20 +326,39 @@ function DeptCube({ dept, geometry, selectedId, onSelect }) {
             document.body.style.cursor = '';
           }}
         >
-          <MeshTransmissionMaterial
-            transmission={1}
-            roughness={0.04}
-            metalness={0.11}
-            thickness={0.65}
-            chromaticAberration={0.1}
-            distortion={0.28}
-            distortionScale={1}
-            temporalDistortion={0.2}
-            envMapIntensity={0.1}
-            color="#dfefff"
-            resolution={256}
-            samples={6}
-          />
+          {LOW_POWER ? (
+            /* A transmission material runs its own render pass per cube —
+               seven of those is what made this unusable on a phone. The
+               physical material approximates the same glass in one pass. */
+            <meshPhysicalMaterial
+              color="#cfe4ff"
+              roughness={0.12}
+              metalness={0.1}
+              transmission={0.72}
+              thickness={0.5}
+              ior={1.3}
+              clearcoat={0.7}
+              clearcoatRoughness={0.15}
+              envMapIntensity={0.6}
+              transparent
+              opacity={0.92}
+            />
+          ) : (
+            <MeshTransmissionMaterial
+              transmission={1}
+              roughness={0.04}
+              metalness={0.11}
+              thickness={0.65}
+              chromaticAberration={0.1}
+              distortion={0.28}
+              distortionScale={1}
+              temporalDistortion={0.2}
+              envMapIntensity={0.1}
+              color="#dfefff"
+              resolution={256}
+              samples={6}
+            />
+          )}
         </mesh>
 
         {/* Team mark suspended inside the glass, always facing the camera */}
@@ -284,15 +371,75 @@ function DeptCube({ dept, geometry, selectedId, onSelect }) {
           </Billboard>
         )}
       </group>
+
+      {/* Breathing halo — the "this is a button" cue */}
+      <mesh ref={haloRef} position={[0, -0.52, 0]} rotation={[-Math.PI / 2, 0, 0]} raycast={() => null}>
+        <ringGeometry args={[0.52, 0.78, 40]} />
+        <meshBasicMaterial
+          color={dept.accent}
+          transparent
+          opacity={0}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Team name + tap cue, floating above the cube */}
+      {labelTex && (
+        <Billboard position={[0, 0.98, 0]}>
+          <mesh ref={labelRef} raycast={() => null}>
+            <planeGeometry args={[1.5, 0.375]} />
+            <meshBasicMaterial
+              map={labelTex}
+              transparent
+              opacity={0}
+              depthWrite={false}
+              depthTest={false}
+              toneMapped={false}
+            />
+          </mesh>
+        </Billboard>
+      )}
     </group>
   );
 }
 
 /** Eases the camera onto the chosen cube and drifts with the pointer otherwise. */
 function CameraRig({ selectedId }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const target = useRef(new THREE.Vector3().copy(FOCUS));
   const home = useRef(camera.position.clone());
+
+  // The seven live cubes span roughly six world units across the isometric
+  // projection. Pinning the overview zoom to a constant pushed the outer teams
+  // off a phone screen entirely, so derive it from the smaller viewport axis
+  // and let the cluster always fit.
+  const overviewZoom = useMemo(
+    () => Math.max(34, Math.min(78, Math.min(size.width, size.height * 1.5) / 7.1)),
+    [size.width, size.height]
+  );
+
+  // On a phone the title card occupies the top of the screen, so the cluster is
+  // nudged into the clear space below it rather than sitting behind the copy.
+  // setViewOffset shifts the projection itself — moving the camera would just
+  // translate the whole scene with it.
+  useEffect(() => {
+    const narrow = size.width < 900;
+    if (narrow) {
+      camera.setViewOffset(
+        size.width,
+        size.height,
+        0,
+        -size.height * 0.16,
+        size.width,
+        size.height
+      );
+    } else {
+      camera.clearViewOffset();
+    }
+    camera.updateProjectionMatrix();
+    return () => camera.clearViewOffset();
+  }, [camera, size.width, size.height]);
 
   useFrame((state, delta) => {
     const cell = DEPT_CELLS[selectedId];
@@ -320,7 +467,7 @@ function CameraRig({ selectedId }) {
     );
     camera.lookAt(target.current);
 
-    const wantZoom = cell ? 150 : 78;
+    const wantZoom = cell ? overviewZoom * 1.9 : overviewZoom;
     camera.zoom += (wantZoom - camera.zoom) * Math.min(1, delta * 2.4);
     camera.updateProjectionMatrix();
   });
@@ -347,7 +494,7 @@ function Scene({ selectedId, onSelect }) {
       ))}
 
       {/* Lighting rig lifted from the reference build */}
-      <Environment resolution={256} frames={Infinity}>
+      <Environment resolution={LOW_POWER ? 128 : 256} frames={LOW_POWER ? 1 : Infinity}>
         <Lightformer
           form="rect"
           color="#94b2cb"
@@ -386,7 +533,7 @@ export default function WinnersScene({ selectedId, onSelect }) {
     <Canvas
       orthographic
       camera={{ position: [16, 22, 20], zoom: 78, near: -100, far: 200 }}
-      dpr={[1, 2]}
+      dpr={LOW_POWER ? [1, 1.5] : [1, 2]}
       gl={{ antialias: true, alpha: true }}
       onPointerMissed={() => onSelect(null)}
       style={{ background: 'transparent' }}

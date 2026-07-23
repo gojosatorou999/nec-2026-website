@@ -498,7 +498,7 @@ h1, h2, h3, h4 {
 /* The outer rail gives the browser something to scroll through. */
 .redirect-rail {
   position: relative;
-  height: 200svh;                    /* one screen of scroll room */
+  height: 145svh;                    /* ~0.45 screen of scroll past the pin */
   padding: 0 clamp(20px, 6vw, 80px);
 }
 
@@ -524,7 +524,7 @@ h1, h2, h3, h4 {
   --accent: var(--peri);
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   align-items: center;
   gap: clamp(28px, 4vw, 62px);
   max-width: 1240px;
@@ -580,6 +580,30 @@ h1, h2, h3, h4 {
 .redirect-cta {
   margin-top: 30px;
   transition: transform 0.5s var(--ease-expo);
+}
+
+/* Photo + stats share the tile's right-hand column. */
+.redirect-aside {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.2vw, 26px);
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.redirect-photo {
+  display: block;
+  /* Fill the whole right column instead of a fixed 420px, which left a wide
+     dead band to the right of the photo on desktop. */
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 60px -26px rgba(0, 0, 0, 0.95);
+  /* the group shot is wide, so let it keep more of its width here */
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center 58%;
 }
 
 .redirect-stats {
@@ -1120,15 +1144,25 @@ h1, h2, h3, h4 {
    to the top and the rail becomes a horizontal scroller under it. */
 @media (max-width: 900px) {
   .winners-title {
-    top: clamp(88px, 13vh, 130px);
+    top: clamp(78px, 11vh, 120px);
     transform: none;
     max-width: none;
     right: clamp(20px, 5vw, 76px);
+    /* The cube field runs the full screen behind this, so the copy needs its
+       own backing here — stacked over bare cubes it was unreadable. */
+    padding: 16px 18px 18px;
+    border-radius: var(--r-lg);
+    background: linear-gradient(180deg, rgba(5, 7, 13, 0.9), rgba(5, 7, 13, 0.72));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
   .winners-title[data-hidden='true'] {
     transform: translateY(-20px);
   }
   .winners-title p { max-width: none; }
+  .winners-title h1 { font-size: clamp(2rem, 11vw, 3rem) !important; }
+  .winners-title p { font-size: 0.9rem !important; }
 
   .winners-rail {
     left: 0;

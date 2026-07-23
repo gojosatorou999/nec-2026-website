@@ -20,7 +20,20 @@ const FRAME_COUNT = 80;
 const FPS = 24;
 const START_AFTER = 10; // frames buffered before playback begins
 const IN_FLIGHT = 12; // parallel fetches; sequential decode only managed ~10fps
-const frameSrc = (i) => `/sequence/bulb_${String(i).padStart(3, '0')}.jpg`;
+
+// Frames well behind the playhead are never drawn again — releasing them keeps
+// the decoded bitmaps bounded. Holding all 80 at full size is ~280MB of RAM,
+// which is not survivable on a 4GB phone.
+const KEEP_BEHIND = 4;
+
+// Phones get a 760px-wide set: a third of the bytes over mobile data, and more
+// than enough pixels for the screen it lands on. Keyed on CSS width because
+// the film is fitted to the viewport's *width* in portrait — the long side is
+// the wrong axis, and device pixel ratio would drag high-dpi phones back onto
+// the heavy set for no visible gain.
+const useSmall = typeof window !== 'undefined' && window.innerWidth <= 900;
+const frameDir = useSmall ? 'sequence-sm' : 'sequence';
+const frameSrc = (i) => `/${frameDir}/bulb_${String(i).padStart(3, '0')}.jpg`;
 
 export default function SequenceLoader({ onComplete }) {
   const canvasRef = useRef(null);
@@ -109,6 +122,14 @@ export default function SequenceLoader({ onComplete }) {
       const frame = Math.max(0, Math.floor(playhead));
 
       draw(frame);
+
+      // Let go of frames the film has passed. Playback is one-pass and forward,
+      // and a resize only ever redraws the current frame, so nothing behind
+      // KEEP_BEHIND is ever needed again.
+      for (let j = frame - KEEP_BEHIND; j >= 0; j--) {
+        if (!images[j]) break; // everything below is already released
+        images[j] = null;
+      }
       setProgress(Math.round((frame / (FRAME_COUNT - 1)) * 100));
 
       if (frame >= FRAME_COUNT - 1) {
