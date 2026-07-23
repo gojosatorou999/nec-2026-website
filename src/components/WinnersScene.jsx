@@ -411,26 +411,26 @@ function CameraRig({ selectedId }) {
   const home = useRef(camera.position.clone());
 
   // The seven live cubes span roughly six world units across the isometric
-  // projection. Pinning the overview zoom to a constant pushed the outer teams
-  // off a phone screen entirely, so derive it from the smaller viewport axis
-  // and let the cluster always fit.
-  const overviewZoom = useMemo(
-    () => Math.max(34, Math.min(78, Math.min(size.width, size.height * 1.5) / 7.1)),
-    [size.width, size.height]
-  );
+  // projection. On a phone the earlier formula still hit its 78 cap, so the
+  // cluster was rendered at desktop size and spilled everywhere. Portrait gets
+  // its own, much smaller zoom so the whole cluster reads as a compact block in
+  // the lower half of the screen.
+  const portrait = size.height > size.width;
+  const overviewZoom = useMemo(() => {
+    if (portrait) return Math.max(34, Math.min(52, size.width / 11.5));
+    return Math.max(34, Math.min(78, Math.min(size.width, size.height * 1.5) / 7.1));
+  }, [portrait, size.width, size.height]);
 
-  // On a phone the title card occupies the top of the screen, so the cluster is
-  // nudged into the clear space below it rather than sitting behind the copy.
-  // setViewOffset shifts the projection itself — moving the camera would just
-  // translate the whole scene with it.
+  // The title card owns the top ~half of a phone, so drop the cluster into the
+  // clear space below it. setViewOffset shifts the projection window itself —
+  // moving the camera would just translate the whole scene with it.
   useEffect(() => {
-    const narrow = size.width < 900;
-    if (narrow) {
+    if (portrait) {
       camera.setViewOffset(
         size.width,
         size.height,
         0,
-        -size.height * 0.16,
+        -size.height * 0.23,
         size.width,
         size.height
       );
@@ -439,7 +439,7 @@ function CameraRig({ selectedId }) {
     }
     camera.updateProjectionMatrix();
     return () => camera.clearViewOffset();
-  }, [camera, size.width, size.height]);
+  }, [camera, portrait, size.width, size.height]);
 
   useFrame((state, delta) => {
     const cell = DEPT_CELLS[selectedId];

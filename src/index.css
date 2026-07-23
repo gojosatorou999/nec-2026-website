@@ -151,6 +151,33 @@ img, svg { display: block; max-width: 100%; }
     0 30px 80px -20px rgba(0, 0, 0, 0.8);
 }
 
+/* Backdrop-filter is unsupported or disabled on a fair share of Android
+   browsers (Samsung Internet, some Chrome/GPU configs). There the glass
+   surfaces — which lean entirely on the blur for legibility — render as
+   near-transparent panels and the text floats over whatever is behind it.
+   When the feature is absent, swap the translucent fills for solid dark ones
+   so every panel stays readable. The blurred glass look is preserved wherever
+   the feature does work. */
+@supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .glass,
+  .glass-sheen,
+  .nav-sheet,
+  .btn-ghost,
+  .tile,
+  .person-card,
+  .social-btn,
+  .legend-chip {
+    background: rgba(17, 23, 38, 0.96) !important;
+  }
+  .glass-strong,
+  .detail-panel {
+    background: rgba(20, 27, 44, 0.98) !important;
+  }
+  .chip {
+    background: rgba(17, 23, 38, 0.92) !important;
+  }
+}
+
 /* Soft specular sheen across the top edge of any glass panel */
 .glass-sheen { position: relative; overflow: hidden; }
 .glass-sheen::before {
@@ -271,6 +298,16 @@ h1, h2, h3, h4 {
 }
 
 /* ═══ NAV ═════════════════════════════════════════════════════════════════ */
+
+/* The mobile dropdown is a menu — it must be readable on every browser, so it
+   carries its own solid background rather than trusting the glass blur, which
+   some Android browsers drop (leaving the links floating over the page). */
+.nav-sheet {
+  background: rgba(10, 14, 24, 0.98) !important;
+  border: 1px solid var(--glass-brd);
+  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, 0.9);
+}
+
 .nav-link {
   position: relative;
   font-family: var(--font-body);
@@ -1152,14 +1189,15 @@ h1, h2, h3, h4 {
     transform: none;
     max-width: none;
     right: clamp(20px, 5vw, 76px);
-    /* The cube field runs the full screen behind this, so the copy needs its
-       own backing here — stacked over bare cubes it was unreadable. */
-    padding: 16px 18px 18px;
+    /* The cube field runs the full screen behind this, so the copy needs a
+       solid backing — a translucent one let the cubes bleed through and it
+       read as clumsy. Fully opaque, no reliance on backdrop-filter (which
+       fails on some Android browsers). */
+    padding: 18px 18px 20px;
     border-radius: var(--r-lg);
-    background: linear-gradient(180deg, rgba(5, 7, 13, 0.9), rgba(5, 7, 13, 0.72));
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--ink);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.95);
   }
   .winners-title[data-hidden='true'] {
     transform: translateY(-20px);
