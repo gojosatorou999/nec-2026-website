@@ -498,7 +498,7 @@ h1, h2, h3, h4 {
 /* The outer rail gives the browser something to scroll through. */
 .redirect-rail {
   position: relative;
-  height: 145svh;                    /* ~0.45 screen of scroll past the pin */
+  height: 120svh;                    /* ~0.2 screen of scroll past the pin — tighter gap between tiles */
   padding: 0 clamp(20px, 6vw, 80px);
 }
 
@@ -610,6 +610,10 @@ h1, h2, h3, h4 {
   display: flex;
   gap: clamp(22px, 3.4vw, 48px);
   flex-shrink: 0;
+  /* Centre the trio under the photo. Left-aligned it read as shifted left of
+     the wider image above it. */
+  justify-content: center;
+  width: 100%;
 }
 .redirect-stat-value {
   font-family: var(--font-display);
@@ -628,7 +632,7 @@ h1, h2, h3, h4 {
 
 /* On small screens the rail shortens so it's not punishing to scroll past */
 @media (max-width: 860px) {
-  .redirect-rail { height: 170svh; }
+  .redirect-rail { height: 135svh; }
 }
 
 /* Reduced motion: no pin, no animation, just show everything */
