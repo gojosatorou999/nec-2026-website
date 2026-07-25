@@ -173,7 +173,7 @@ export const HOSTS = [
     accent: 'var(--peri)',
     initials: 'GV',
     body:
-      'Made sure the NEC 2026 event at MGIT was conductuded efficiently.',
+      'Made sure the NEC 2026 event at MGIT was conductded efficiently.',
   },
   {
     id: 'balaji',
