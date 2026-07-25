@@ -165,10 +165,20 @@ export const HOSTS = [
     body:
       'Directs NEC 2026 at MGIT and runs the technical side of Idea Incubator. As campus ambassador he is the direct line between MGIT and E-Cell IIT Bombay.',
   },
+   {
+    id: 'vaishnavi',
+    name: 'G Vaishnavi',
+    role:
+      'Coordinator, NEC 2026 · Campus Ambassador, IIT Bombay',
+    accent: 'var(--peri)',
+    initials: 'GV',
+    body:
+      'Made sure the NEC 2026 event at MGIT was conductuded efficiently.',
+  },
   {
     id: 'balaji',
-    name: 'Balaji',
-    role: 'Team Leader · Club Head, Idea Incubator',
+    name: 'T Balaji',
+    role: 'Team Leader,NEC 2026 · Club Head, Idea Incubator',
     accent: 'var(--sky)',
     initials: 'B',
     body:
