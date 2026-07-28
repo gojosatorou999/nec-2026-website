@@ -35,7 +35,7 @@ export const ABOUT_ENTITIES = [
     body: [
       'Entrepreneurship Cell is essential for any college because it develops students’ entrepreneurial spirit, which we believe is instrumental for our country to grow.',
       'NEC is the platform that helps colleges build an actively functioning E-Cell.',
-      'It’s a 6 month-long competition where we guide students by giving them tasks that are essential for any Entrepreneurship cell to work smoothly.',
+      'It’s a 6 month long competition where we guide students by giving them tasks that are essential for any Entrepreneurship cell to work smoothly.',
     ],
   },
   {
