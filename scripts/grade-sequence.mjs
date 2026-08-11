@@ -12,7 +12,7 @@
 //
 //   npm i --no-save sharp
 //   node scripts/grade-sequence.mjs ideaclublogoeffect/public/sequence public/sequence
-//
+// 
 // Add --preview=0,30,79 to render just those frames somewhere else while
 // tuning the constants below.
 import sharp from 'sharp';
