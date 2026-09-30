@@ -24,10 +24,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main:    fileURLToPath(new URL('./index.html',   import.meta.url)),
-        winners: fileURLToPath(new URL('./winners.html', import.meta.url)),
-        about:   fileURLToPath(new URL('./about.html',   import.meta.url)),
+        main:    fileURLToPath(new URL('./index.html',    import.meta.url)),
+        winners: fileURLToPath(new URL('./winners.html',  import.meta.url)),
+        about:   fileURLToPath(new URL('./about.html',    import.meta.url)),
         timeline: fileURLToPath(new URL('./timeline.html', import.meta.url)),
+        blog:    fileURLToPath(new URL('./blog.html',     import.meta.url)),
       },
     },
   },

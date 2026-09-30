@@ -7,6 +7,7 @@ import MentorsSection from './components/MentorsSection';
 import DelegationSection from './components/DelegationSection';
 import HostsSection from './components/HostsSection';
 import Footer from './components/Footer';
+import BlogSection from './components/BlogSection';
 import WaterLayer from './components/WaterLayer';
 import { useAnchorScroll } from './components/useAnchorScroll';
 
@@ -40,6 +41,7 @@ function Site() {
             <DelegationSection />
             <MentorsSection />
             <HostsSection />
+            <BlogSection />
           </main>
 
           <Footer />

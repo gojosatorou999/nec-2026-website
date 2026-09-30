@@ -20,6 +20,7 @@ export const NAV_LINKS = [
   { href: '#mentors', label: 'Mentors' },
   { href: '#hosts', label: 'Hosts' },
   { href: '/timeline.html', label: 'Timeline', external: true },
+  { href: '/blog.html', label: 'Blog', external: true },
 ];
 
 /* ─── The four bodies behind NEC 2026, told on /about.html ───────────────────
