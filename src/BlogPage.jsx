@@ -66,51 +66,67 @@ function BlogCard({ post, onClick }) {
 
 /* ─── Full Post Modal ─────────────────────────────────────────────────────── */
 function PostModal({ post, onClose }) {
+  // Close on Escape key
+  const handleKey = (e) => e.key === 'Escape' && onClose();
   return (
     <>
-      <div className="panel-scrim" data-open="true" onClick={onClose} />
+      {/* Full-screen scrim */}
+      <div
+        className="post-modal-overlay"
+        onClick={onClose}
+        role="presentation"
+        onKeyDown={handleKey}
+      />
+
+      {/* Centered card */}
       <div className="post-modal" role="dialog" aria-modal="true" aria-labelledby="post-modal-title">
-        <button className="modal-close-btn" onClick={onClose} aria-label="Close post">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
-
-        {post.coverUrl && (
-          <img src={post.coverUrl} alt={`Cover for ${post.title}`} className="post-modal-cover" />
-        )}
-
-        <div className="post-modal-inner">
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
-            {post.tags?.map((tag) => <span key={tag} className="chip">{tag}</span>)}
+        {/* Sticky header bar inside card */}
+        <div className="post-modal-header">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {post.tags?.map((tag) => <span key={tag} className="chip" style={{ fontSize: '0.6rem' }}>{tag}</span>)}
           </div>
-          <h1 id="post-modal-title" className="post-modal-title">{post.title}</h1>
-          <div className="post-modal-meta">
-            <span className="eyebrow">{post.author}</span>
-            <span className="eyebrow" style={{ color: 'var(--text-3)' }}>·</span>
-            <span className="eyebrow">{formatDate(post.createdAt)}</span>
-          </div>
-          <div className="hairline" style={{ margin: '24px 0' }} />
-          <div className="post-modal-content">
-            {post.content.split('\n').map((para, i) => {
-              const trimmed = para.trim();
-              if (!trimmed) return <br key={i} />;
-              // ## Subheading
-              if (trimmed.startsWith('## ')) {
-                return <h2 key={i} className="post-modal-subheading">{trimmed.slice(3)}</h2>;
-              }
-              // ![alt](url) image
-              const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-              if (imgMatch) {
-                return (
-                  <figure key={i} className="post-modal-figure">
-                    <img src={imgMatch[2]} alt={imgMatch[1]} loading="lazy" />
-                    {imgMatch[1] && <figcaption>{imgMatch[1]}</figcaption>}
-                  </figure>
-                );
-              }
-              return <p key={i}>{trimmed}</p>;
-            })}
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close post">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="post-modal-body">
+          {post.coverUrl && (
+            <div className="post-modal-cover-wrap">
+              <img src={post.coverUrl} alt={`Cover for ${post.title}`} className="post-modal-cover" />
+            </div>
+          )}
+
+          <div className="post-modal-inner">
+            <h1 id="post-modal-title" className="post-modal-title">{post.title}</h1>
+            <div className="post-modal-meta">
+              <span className="eyebrow">{post.author}</span>
+              <span className="eyebrow" style={{ color: 'var(--text-3)' }}>·</span>
+              <span className="eyebrow">{formatDate(post.createdAt)}</span>
+            </div>
+            <div className="hairline" style={{ margin: '24px 0' }} />
+            <div className="post-modal-content">
+              {post.content.split('\n').map((para, i) => {
+                const trimmed = para.trim();
+                if (!trimmed) return <br key={i} />;
+                if (trimmed.startsWith('## ')) {
+                  return <h2 key={i} className="post-modal-subheading">{trimmed.slice(3)}</h2>;
+                }
+                const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+                if (imgMatch) {
+                  return (
+                    <figure key={i} className="post-modal-figure">
+                      <img src={imgMatch[2]} alt={imgMatch[1]} loading="lazy" />
+                      {imgMatch[1] && <figcaption>{imgMatch[1]}</figcaption>}
+                    </figure>
+                  );
+                }
+                return <p key={i}>{trimmed}</p>;
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -273,52 +289,99 @@ export default function BlogPage() {
         .blog-card-meta { margin-top:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .blog-card-cta { align-self: flex-start; }
 
-        .post-modal {
-          position: fixed; top:0; right:0; z-index:90;
-          height:100dvh; width: min(680px,100vw);
-          display:flex; flex-direction:column;
-          overflow-y:auto; overscroll-behavior:contain;
-          background: rgba(10,14,24,0.94);
-          border-left: 1px solid rgba(255,255,255,0.1);
-          backdrop-filter: blur(40px) saturate(180%);
-          -webkit-backdrop-filter: blur(40px) saturate(180%);
+        /* ── Full-screen overlay ── */
+        .post-modal-overlay {
+          position: fixed; inset: 0; z-index: 88;
+          background: rgba(4,6,14,0.80);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          animation: overlayIn 0.25s ease forwards;
         }
-        .post-modal-cover { width:100%; aspect-ratio:16/9; object-fit:cover; flex-shrink:0; }
-        .post-modal-inner { padding: clamp(28px,5vw,52px); padding-top: clamp(64px,8vw,80px); flex:1; }
+        @keyframes overlayIn { from { opacity:0 } to { opacity:1 } }
+
+        /* ── Centered card ── */
+        .post-modal {
+          position: fixed;
+          top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 90;
+          width: min(860px, calc(100vw - 32px));
+          max-height: min(90dvh, 900px);
+          display: flex; flex-direction: column;
+          background: linear-gradient(160deg, rgba(16,22,40,0.98) 0%, rgba(9,13,26,0.99) 100%);
+          border: 1px solid rgba(163,178,255,0.22);
+          border-radius: 20px;
+          box-shadow:
+            0 0 0 1px rgba(255,255,255,0.06) inset,
+            0 40px 100px -20px rgba(0,0,0,0.95),
+            0 0 60px -10px rgba(100,120,255,0.12);
+          animation: cardIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+          overflow: hidden;
+        }
+        @keyframes cardIn {
+          from { opacity:0; transform: translate(-50%, -48%) scale(0.96); }
+          to   { opacity:1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* ── Sticky header inside card ── */
+        .post-modal-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 14px 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          flex-shrink: 0;
+          gap: 12px;
+        }
+
+        /* ── Scrollable body ── */
+        .post-modal-body {
+          overflow-y: auto; overscroll-behavior: contain;
+          flex: 1;
+        }
+        .post-modal-body::-webkit-scrollbar { width: 6px; }
+        .post-modal-body::-webkit-scrollbar-track { background: transparent; }
+        .post-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        /* ── Cover image ── */
+        .post-modal-cover-wrap { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+        .post-modal-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* ── Inner text area ── */
+        .post-modal-inner { padding: clamp(28px,5vw,48px); }
         .post-modal-title {
           font-family: var(--font-display);
-          font-size: clamp(1.7rem,4vw,2.5rem);
-          font-weight:700; letter-spacing:-0.04em; line-height:1.1; margin-bottom:14px;
+          font-size: clamp(1.6rem, 4vw, 2.4rem);
+          font-weight: 700; letter-spacing: -0.04em; line-height: 1.12; margin-bottom: 14px;
         }
-        .post-modal-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .post-modal-content { font-size:1.02rem; line-height:1.85; color: var(--text-2); }
+        .post-modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .post-modal-content { font-size: 1.02rem; line-height: 1.9; color: var(--text-2); }
         .post-modal-content p { margin-bottom: 1.2em; }
         .post-modal-subheading {
           font-family: var(--font-display);
-          font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+          font-size: clamp(1.1rem, 2.2vw, 1.4rem);
           font-weight: 650; letter-spacing: -0.025em; line-height: 1.25;
-          color: var(--text); margin: 2em 0 0.6em;
+          color: var(--text); margin: 2em 0 0.55em;
         }
-        .post-modal-subheading:first-child { margin-top: 0; }
         .post-modal-figure {
-          margin: 1.8em 0; border-radius: var(--r-xl); overflow: hidden;
+          margin: 1.8em 0; border-radius: 12px; overflow: hidden;
           border: 1px solid rgba(255,255,255,0.1);
         }
-        .post-modal-figure img { width: 100%; display: block; object-fit: cover; }
+        .post-modal-figure img { width: 100%; display: block; }
         .post-modal-figure figcaption {
-          padding: 10px 16px; font-size: 0.8rem; color: var(--text-3);
+          padding: 9px 14px; font-size: 0.78rem; color: var(--text-3);
           font-family: var(--font-mono); letter-spacing: 0.04em;
           background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07);
         }
 
+        /* ── Close button ── */
         .modal-close-btn {
-          position:absolute; top:16px; right:16px; z-index:2;
+          flex-shrink: 0;
           background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
-          border-radius: var(--r-pill); width:34px; height:34px;
-          display:grid; place-items:center; cursor:pointer;
+          border-radius: var(--r-pill); width: 34px; height: 34px;
+          display: grid; place-items: center; cursor: pointer;
           transition: background 0.3s; color: var(--text-2);
         }
-        .modal-close-btn:hover { background: rgba(255,255,255,0.14); }
+        .modal-close-btn:hover { background: rgba(255,255,255,0.16); }
 
         .blog-search-input {
           width:100%; padding: 12px 16px; border-radius: var(--r-sm);
