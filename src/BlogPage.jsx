@@ -248,7 +248,7 @@ export default function BlogPage() {
       <style>{`
         .blog-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(520px, 100%), 1fr));
           gap: clamp(20px, 3vw, 32px);
         }
 
@@ -272,7 +272,7 @@ export default function BlogPage() {
           border-color: rgba(163,178,255,0.3);
           box-shadow: 0 32px 80px -24px rgba(0,0,0,0.95);
         }
-        .blog-card-cover { width:100%; aspect-ratio:16/9; overflow:hidden; }
+        .blog-card-cover { width:100%; aspect-ratio:4/3; overflow:hidden; }
         .blog-card-cover img { width:100%; height:100%; object-fit:cover; transition: transform 0.6s var(--ease-expo); }
         .blog-card:hover .blog-card-cover img { transform: scale(1.04); }
         .blog-card-body { padding: clamp(20px,3vw,28px); display:flex; flex-direction:column; flex:1; }
@@ -305,8 +305,8 @@ export default function BlogPage() {
           top: 50%; left: 50%;
           transform: translate(-50%, -50%);
           z-index: 90;
-          width: min(860px, calc(100vw - 32px));
-          max-height: min(90dvh, 900px);
+          width: min(1100px, calc(100vw - 24px));
+          max-height: 95dvh;
           display: flex; flex-direction: column;
           background: linear-gradient(160deg, rgba(16,22,40,0.98) 0%, rgba(9,13,26,0.99) 100%);
           border: 1px solid rgba(163,178,255,0.22);
@@ -343,18 +343,18 @@ export default function BlogPage() {
         .post-modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
 
         /* ── Cover image ── */
-        .post-modal-cover-wrap { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
-        .post-modal-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .post-modal-cover-wrap { width: 100%; overflow: hidden; background: rgba(0,0,0,0.35); }
+        .post-modal-cover { width: 100%; height: auto; max-height: 80dvh; object-fit: contain; display: block; margin: 0 auto; }
 
         /* ── Inner text area ── */
-        .post-modal-inner { padding: clamp(28px,5vw,48px); }
+        .post-modal-inner { padding: clamp(28px,5vw,56px); max-width: 900px; margin: 0 auto; }
         .post-modal-title {
           font-family: var(--font-display);
           font-size: clamp(1.6rem, 4vw, 2.4rem);
           font-weight: 700; letter-spacing: -0.04em; line-height: 1.12; margin-bottom: 14px;
         }
         .post-modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .post-modal-content { font-size: 1.02rem; line-height: 1.9; color: var(--text-2); }
+        .post-modal-content { font-size: 1.1rem; line-height: 1.9; color: var(--text-2); }
         .post-modal-content p { margin-bottom: 1.2em; }
         .post-modal-subheading {
           font-family: var(--font-display);
@@ -366,7 +366,7 @@ export default function BlogPage() {
           margin: 1.8em 0; border-radius: 12px; overflow: hidden;
           border: 1px solid rgba(255,255,255,0.1);
         }
-        .post-modal-figure img { width: 100%; display: block; }
+        .post-modal-figure img { width: 100%; height: auto; display: block; }
         .post-modal-figure figcaption {
           padding: 9px 14px; font-size: 0.78rem; color: var(--text-3);
           font-family: var(--font-mono); letter-spacing: 0.04em;

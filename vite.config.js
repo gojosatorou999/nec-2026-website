@@ -29,6 +29,7 @@ export default defineConfig({
         about:   fileURLToPath(new URL('./about.html',    import.meta.url)),
         timeline: fileURLToPath(new URL('./timeline.html', import.meta.url)),
         blog:    fileURLToPath(new URL('./blog.html',     import.meta.url)),
+        ideaBox: fileURLToPath(new URL('./idea-box.html', import.meta.url)),
       },
     },
   },
