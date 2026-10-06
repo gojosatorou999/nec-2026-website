@@ -92,9 +92,25 @@ function PostModal({ post, onClose }) {
           </div>
           <div className="hairline" style={{ margin: '24px 0' }} />
           <div className="post-modal-content">
-            {post.content.split('\n').map((para, i) =>
-              para.trim() ? <p key={i}>{para}</p> : <br key={i} />
-            )}
+            {post.content.split('\n').map((para, i) => {
+              const trimmed = para.trim();
+              if (!trimmed) return <br key={i} />;
+              // ## Subheading
+              if (trimmed.startsWith('## ')) {
+                return <h2 key={i} className="post-modal-subheading">{trimmed.slice(3)}</h2>;
+              }
+              // ![alt](url) image
+              const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+              if (imgMatch) {
+                return (
+                  <figure key={i} className="post-modal-figure">
+                    <img src={imgMatch[2]} alt={imgMatch[1]} loading="lazy" />
+                    {imgMatch[1] && <figcaption>{imgMatch[1]}</figcaption>}
+                  </figure>
+                );
+              }
+              return <p key={i}>{trimmed}</p>;
+            })}
           </div>
         </div>
       </div>
@@ -277,6 +293,23 @@ export default function BlogPage() {
         .post-modal-meta { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .post-modal-content { font-size:1.02rem; line-height:1.85; color: var(--text-2); }
         .post-modal-content p { margin-bottom: 1.2em; }
+        .post-modal-subheading {
+          font-family: var(--font-display);
+          font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+          font-weight: 650; letter-spacing: -0.025em; line-height: 1.25;
+          color: var(--text); margin: 2em 0 0.6em;
+        }
+        .post-modal-subheading:first-child { margin-top: 0; }
+        .post-modal-figure {
+          margin: 1.8em 0; border-radius: var(--r-xl); overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .post-modal-figure img { width: 100%; display: block; object-fit: cover; }
+        .post-modal-figure figcaption {
+          padding: 10px 16px; font-size: 0.8rem; color: var(--text-3);
+          font-family: var(--font-mono); letter-spacing: 0.04em;
+          background: rgba(255,255,255,0.03); border-top: 1px solid rgba(255,255,255,0.07);
+        }
 
         .modal-close-btn {
           position:absolute; top:16px; right:16px; z-index:2;
