@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { BrandLockup } from './BrandLogo';
-import { NAV_LINKS } from '../data/site';
+import { NAV_LINKS, linkFor } from '../data/site';
 
-export default function Navbar() {
+export default function Navbar({ onHome = true, active = '' }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -38,7 +38,7 @@ export default function Navbar() {
           gap: 16,
         }}
       >
-        <a href="#top" style={{ textDecoration: 'none' }} aria-label="NEC 2026 Challenge — home">
+        <a href={onHome ? '#top' : '/'} style={{ textDecoration: 'none' }} aria-label="NEC 2026 Challenge — home">
           <BrandLockup size={34} />
         </a>
 
@@ -48,7 +48,12 @@ export default function Navbar() {
           style={{ display: 'flex', alignItems: 'center', gap: 'clamp(16px, 2.4vw, 30px)' }}
         >
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href} className="nav-link">
+            <a
+              key={l.href}
+              href={linkFor(l.href, onHome)}
+              className={'nav-link' + (active === l.label ? ' is-active' : '')}
+              aria-current={active === l.label ? 'page' : undefined}
+            >
               {l.label}
             </a>
           ))}
@@ -96,8 +101,9 @@ export default function Navbar() {
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
-              href={l.href}
-              className="nav-link"
+              href={linkFor(l.href, onHome)}
+              className={'nav-link' + (active === l.label ? ' is-active' : '')}
+              aria-current={active === l.label ? 'page' : undefined}
               onClick={() => setMenuOpen(false)}
               style={{ padding: '11px 6px', fontSize: '0.98rem' }}
             >

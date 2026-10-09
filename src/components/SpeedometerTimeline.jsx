@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { scrollToY } from '../smoothScroll';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SPEEDOMETER TIMELINE
@@ -177,7 +178,7 @@ export default function SpeedometerTimeline() {
     if (!el) return;
     const span = el.offsetHeight - window.innerHeight;
     const t = Math.min(MAX_INDEX, Math.max(0, i)) / MAX_INDEX;
-    window.scrollTo({ top: el.offsetTop + t * span, behavior: 'smooth' });
+    scrollToY(el.offsetTop + t * span);
   };
 
   /* Arrow keys step through events — but only while the dial is actually

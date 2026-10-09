@@ -331,6 +331,8 @@ h1, h2, h3, h4 {
 }
 .nav-link:hover { color: var(--text); }
 .nav-link:hover::after { width: 100%; }
+.nav-link.is-active { color: var(--text); }
+.nav-link.is-active::after { width: 100%; }
 
 /* ═══ ROSTER TILE ═════════════════════════════════════════════════════════ */
 .tile {
@@ -504,6 +506,18 @@ h1, h2, h3, h4 {
   will-change: transform, opacity;
 }
 
+/* Dims buried cards in the pile (see StickyStack). */
+.stack-item { position: relative; }
+.stack-shade {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-xl);
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 /* Short viewports: the heading gives up its supporting line and the cards
    tighten, rather than letting the front card overflow the pin. */
 @media (max-height: 860px) {
@@ -571,7 +585,7 @@ h1, h2, h3, h4 {
   border-radius: var(--r-2xl);
   text-decoration: none;
   color: inherit;
-  background: linear-gradient(180deg, rgba(24, 32, 52, 0.99), rgba(13, 18, 31, 0.99));
+  background: linear-gradient(180deg, rgb(24, 32, 52), rgb(13, 18, 31));
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06) inset,
     0 34px 80px -28px rgba(0, 0, 0, 0.95);
@@ -715,7 +729,7 @@ h1, h2, h3, h4 {
    them overlap, and you stop being able to read the one on top. */
 .stack-item > .person-card,
 .stack-item > .stack-card {
-  background: linear-gradient(180deg, rgba(24, 32, 52, 0.99), rgba(13, 18, 31, 0.99));
+  background: linear-gradient(180deg, rgb(24, 32, 52), rgb(13, 18, 31));
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -1239,4 +1253,43 @@ h1, h2, h3, h4 {
 @keyframes sheen-sweep {
   0%   { transform: translateX(-120%); }
   100% { transform: translateX(220%); }
+}
+
+/* ═══ SCROLL PERFORMANCE ══════════════════════════════════════════════════
+   Lenis (src/smoothScroll.js) drives wheel scrolling; it must not be
+   double-smoothed by the CSS scroll-behavior.
+
+   On touch devices the water canvas repaints every frame, and every element
+   with a backdrop blur re-blurs whatever is behind it on each of those frames.
+   Dozens of 20–40px blurs over a moving canvas is what made phones stutter
+   while scrolling. So on coarse pointers the small, numerous glass pieces drop
+   the blur for a near-opaque fill (visually almost identical on the dark ink),
+   and the few large panels keep a much lighter blur. */
+html.lenis { scroll-behavior: auto; }
+
+@media (pointer: coarse) {
+  .btn-ghost,
+  .chip,
+  .tile,
+  .person-card,
+  .social-btn,
+  .legend-chip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(17, 23, 38, 0.92) !important;
+  }
+  .glass,
+  .glass-strong,
+  .detail-panel {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+  }
+  .glass { background: rgba(14, 19, 32, 0.78); }
+  .glass-strong,
+  .detail-panel { background: rgba(16, 22, 37, 0.9); }
+  .panel-scrim {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: rgba(5, 7, 13, 0.78);
+  }
 }

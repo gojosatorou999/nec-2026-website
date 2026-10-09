@@ -24,6 +24,10 @@ export const NAV_LINKS = [
   { href: '/idea-box.html', label: 'Idea Box', external: true },
 ];
 
+/* Off the home page, in-page anchors (#mentors) must point back at it (/#mentors). */
+export const linkFor = (href, onHome) =>
+  !onHome && href.startsWith('#') ? '/' + href : href;
+
 /* ─── The four bodies behind NEC 2026, told on /about.html ───────────────────
    Copy supplied verbatim by the club — do not paraphrase.
    ─────────────────────────────────────────────────────────────────────────── */

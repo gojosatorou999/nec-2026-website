@@ -91,6 +91,15 @@ function compile(gl, type, src) {
   return sh;
 }
 
+/* The caustics are soft light — they look identical rendered well below
+   native resolution and stretched by the browser. Shading every physical
+   pixel at DPR 2–3 was the single most expensive thing on the page, and on
+   phones it fought the scroll for the GPU. */
+function renderScale() {
+  const coarse = window.matchMedia('(pointer: coarse)').matches;
+  return coarse ? 0.5 : 0.75;
+}
+
 export function useWaterShader() {
   const canvasRef = useRef(null);
   const raf = useRef(0);
@@ -120,10 +129,10 @@ export function useWaterShader() {
 
   const onPointer = useCallback((e) => {
     const s = st.current;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    s.px = e.clientX * dpr;
+    const k = renderScale();
+    s.px = e.clientX * k;
     // WebGL origin is bottom-left; the DOM's is top-left
-    s.py = (window.innerHeight - e.clientY) * dpr;
+    s.py = (window.innerHeight - e.clientY) * k;
     s.paTarget = 1;
   }, []);
 
@@ -172,10 +181,20 @@ export function useWaterShader() {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // premultiplied
 
+    // Mobile browsers fire 'resize' every time the URL bar slides in or out
+    // while scrolling. Reallocating the canvas on each one was a visible hitch,
+    // so only a width change or a large height change (rotation) counts.
+    let lastW = 0;
+    let lastH = 0;
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.floor(window.innerWidth * dpr);
-      const h = Math.floor(window.innerHeight * dpr);
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (vw === lastW && Math.abs(vh - lastH) < 160) return;
+      lastW = vw;
+      lastH = vh;
+      const k = renderScale();
+      const w = Math.max(1, Math.floor(vw * k));
+      const h = Math.max(1, Math.floor(vh * k));
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;

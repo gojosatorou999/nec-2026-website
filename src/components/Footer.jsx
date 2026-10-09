@@ -1,4 +1,4 @@
-import { LINK_GROUPS, EVENT, NAV_LINKS } from '../data/site';
+import { LINK_GROUPS, EVENT, NAV_LINKS, linkFor } from '../data/site';
 import {
   IdeaIncubatorLogo,
   IconLinkedIn,
@@ -45,7 +45,7 @@ function SocialRow({ group }) {
   );
 }
 
-export default function Footer() {
+export default function Footer({ onHome = true }) {
   return (
     <footer
       style={{
@@ -112,7 +112,7 @@ export default function Footer() {
                 {NAV_LINKS.map((l) => (
                   <a
                     key={l.href}
-                    href={l.href}
+                    href={linkFor(l.href, onHome)}
                     className="nav-link"
                     style={{ alignSelf: 'flex-start' }}
                   >

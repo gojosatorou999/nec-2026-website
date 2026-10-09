@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { scrollToY } from '../smoothScroll';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ANCHOR SCROLL
@@ -54,24 +55,37 @@ export function useAnchorScroll() {
       if (!el) return;
 
       e.preventDefault();
-      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      window.scrollTo({ top: targetFor(el), behavior: reduced ? 'auto' : 'smooth' });
+      scrollToY(targetFor(el));
       history.replaceState(null, '', `#${id}`);
     };
 
-    // A page loaded with a hash has the same problem, and the browser has
-    // already jumped by the time this runs — so correct it once mounted.
+    // A page loaded with a hash (/#mentors, e.g. from another page's nav) has
+    // the same problem. On the home page the sections only mount once the
+    // intro sequence finishes, so wait for the target to exist, then let the
+    // layout settle for a frame before jumping to it.
+    let observer = null;
+    let t = 0;
     const onLoad = () => {
       const id = window.location.hash.slice(1);
       if (!id) return;
+      const jump = (el) => requestAnimationFrame(() => scrollToY(targetFor(el), { immediate: true }));
       const el = document.getElementById(id);
-      if (el) window.scrollTo({ top: targetFor(el), behavior: 'auto' });
+      if (el) return jump(el);
+      observer = new MutationObserver(() => {
+        const found = document.getElementById(id);
+        if (!found) return;
+        observer.disconnect();
+        observer = null;
+        jump(found);
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
     };
-    const t = setTimeout(onLoad, 60);
+    t = setTimeout(onLoad, 60);
 
     document.addEventListener('click', onClick);
     return () => {
       clearTimeout(t);
+      observer?.disconnect();
       document.removeEventListener('click', onClick);
     };
   }, []);

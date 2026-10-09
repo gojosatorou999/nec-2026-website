@@ -177,20 +177,31 @@ export default function TimelinePage() {
     return () => observer.disconnect();
   }, []);
 
+  // Re-renders the whole page, so at most once per frame and only when the
+  // trace has visibly moved — scroll events fire faster than the display.
+  const rafRef = useRef(0);
   const handleScroll = useCallback(() => {
-    const section = sectionRef.current;
-    if (!section || !sectionVisible) return;
-    const rect = section.getBoundingClientRect();
-    const traveled = window.innerHeight - rect.top;
-    const progress = Math.max(0, Math.min(1, traveled / (rect.height + window.innerHeight * 0.3)));
-    setScrollProgress(progress);
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      const section = sectionRef.current;
+      if (!section || !sectionVisible) return;
+      const rect = section.getBoundingClientRect();
+      const traveled = window.innerHeight - rect.top;
+      const progress = Math.max(0, Math.min(1, traveled / (rect.height + window.innerHeight * 0.3)));
+      setScrollProgress(Math.round(progress * 500) / 500);
+    });
   }, [sectionVisible]);
 
   useEffect(() => {
     if (reducedMotion) { setScrollProgress(1); return; }
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    };
   }, [handleScroll, reducedMotion]);
 
   useEffect(() => {

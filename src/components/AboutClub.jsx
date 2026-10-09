@@ -75,6 +75,8 @@ function RaceCircuit() {
   const rafRef      = useRef(null);
   const smoothRef   = useRef(0);
   const rawRef      = useRef(0);
+  const lenRef      = useRef(0);
+  const settledRef  = useRef(false);
 
   const [phase, setPhase] = useState('before'); // 'before' | 'active' | 'after'
   const [activeCP, setActiveCP] = useState(-1);
@@ -113,8 +115,17 @@ function RaceCircuit() {
       setPhase(newPhase);
     }
 
-    // Smooth follow
-    smoothRef.current += (rawRef.current - smoothRef.current) * 0.07;
+    // Smooth follow. Once settled there is nothing to redraw, so skip the
+    // SVG path sampling entirely — this loop runs every frame for the life of
+    // the page, and getPointAtLength on every one of them stole frame time
+    // from scrolling even with the section far off screen.
+    const diff = rawRef.current - smoothRef.current;
+    if (Math.abs(diff) < 0.0004 && settledRef.current) {
+      rafRef.current = requestAnimationFrame(tick);
+      return;
+    }
+    settledRef.current = Math.abs(diff) < 0.0004;
+    smoothRef.current += diff * 0.07;
     const sp = smoothRef.current;
 
     // Drive SVG animation
@@ -123,7 +134,7 @@ function RaceCircuit() {
     const dot   = dotRef.current;
     const glow  = dotGlowRef.current;
     if (path && trail && dot) {
-      const len = path.getTotalLength();
+      const len = lenRef.current || (lenRef.current = path.getTotalLength());
       path.style.strokeDashoffset  = len * (1 - sp);
       trail.style.strokeDashoffset = len * (1 - Math.max(0, sp - 0.06));
       const pt = path.getPointAtLength(sp * len);

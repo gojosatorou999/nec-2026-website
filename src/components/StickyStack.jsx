@@ -68,7 +68,8 @@ export default function StickyStack({
       cards().forEach((el) => {
         el.style.transform = '';
         el.style.opacity = '';
-        el.style.filter = '';
+        const shade = el.querySelector(':scope > .stack-shade');
+        if (shade) shade.style.opacity = '0';
       });
       const deck = root.querySelector(':scope .stack-deck');
       if (deck) {
@@ -167,8 +168,11 @@ export default function StickyStack({
         // opacity leads the movement so a card is readable while it travels
         el.style.opacity = String(clamp01(t * 1.8));
         // floor is deliberately high — dimmed past ~0.6 the buried cards go so
-        // dark they read as empty space rather than as a stack
-        el.style.filter = `brightness(${Math.max(0.62, 1 - depth * 0.19)})`;
+        // dark they read as empty space rather than as a stack. Done as a black
+        // overlay's opacity rather than filter: brightness(), which repainted
+        // every card on every scroll frame; an opacity change is composited.
+        const shade = el.querySelector(':scope > .stack-shade');
+        if (shade) shade.style.opacity = String(1 - Math.max(0.62, 1 - depth * 0.19));
       }
     };
 
@@ -200,13 +204,33 @@ export default function StickyStack({
       if (!img.complete) img.addEventListener('load', applyMode, { once: true });
     });
 
+    // Phones fire 'resize' whenever the URL bar slides in or out mid-scroll.
+    // Refitting measures layout synchronously, so doing it on each of those
+    // stalled the scroll. Only a width change or a big height change refits.
+    let lastW = window.innerWidth;
+    let lastH = window.innerHeight;
+    let resizeRaf = 0;
+    const onResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w === lastW && Math.abs(h - lastH) < 160) {
+        onScroll();
+        return;
+      }
+      lastW = w;
+      lastH = h;
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(applyMode);
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', applyMode);
+    window.addEventListener('resize', onResize);
 
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      cancelAnimationFrame(resizeRaf);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', applyMode);
+      window.removeEventListener('resize', onResize);
       imgs.forEach((img) => img.removeEventListener('load', applyMode));
     };
   }, [count]);
@@ -229,6 +253,7 @@ export default function StickyStack({
           {items.map((child, i) => (
             <div key={i} className="stack-item" style={{ zIndex: i + 1 }}>
               {child}
+              <div className="stack-shade" aria-hidden="true" />
             </div>
           ))}
         </div>

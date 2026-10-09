@@ -78,8 +78,12 @@ export default function IdeaLogoScene({ progressRef }) {
       antialias: false,
       powerPreference: 'high-performance',
     });
+    // Bloom + MSAA at full phone density (DPR 3) cost more GPU than the rest
+    // of the page combined and fought the scroll for frames. Shards are soft-
+    // lit glass under bloom — 1.25–1.5x is visually indistinguishable.
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.25 : 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -97,7 +101,7 @@ export default function IdeaLogoScene({ progressRef }) {
       type: THREE.HalfFloatType,
       format: THREE.RGBAFormat,
       colorSpace: THREE.SRGBColorSpace,
-      samples: 8,
+      samples: 2,
     });
     const composer = new EffectComposer(renderer, renderTarget);
     composer.addPass(new RenderPass(scene, camera));
@@ -400,10 +404,50 @@ export default function IdeaLogoScene({ progressRef }) {
     const clock = new THREE.Clock();
     let frameId = 0;
     let smoothed = progressRef.current ?? 0;
+    let pixelRatio = renderer.getPixelRatio();
+    let slowAvg = 1 / 60;
+    let slowFrames = 0;
+
+    // Only render while the hero is on screen and the tab is visible. Before,
+    // this loop rendered bloom every frame for the whole visit — including
+    // while reading the bottom of the page, where it was the main scroll cost.
+    let visible = true;
+    const resume = () => {
+      if (frameId || !visible || document.hidden) return;
+      clock.getDelta(); // drop the paused gap so nothing jumps
+      frameId = requestAnimationFrame(animate);
+    };
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      resume();
+    });
+    io.observe(host);
+    const onVisibility = () => resume();
+    document.addEventListener('visibilitychange', onVisibility);
 
     const animate = () => {
+      if (!visible || document.hidden) {
+        frameId = 0;
+        return;
+      }
       frameId = requestAnimationFrame(animate);
-      const dt = Math.min(clock.getDelta(), 0.05);
+      const rawDt = clock.getDelta();
+      const dt = Math.min(rawDt, 0.05);
+
+      // Adaptive resolution: on a GPU that can't hold ~45fps, render the mark
+      // at a lower pixel ratio (the browser upscales it; under bloom the
+      // difference is invisible). Fast machines never trip this.
+      if (rawDt < 0.2) {
+        slowAvg += (rawDt - slowAvg) * 0.05;
+        if (++slowFrames > 45 && slowAvg > 1 / 45 && pixelRatio > 0.55) {
+          pixelRatio = Math.max(0.55, pixelRatio * 0.8);
+          renderer.setPixelRatio(pixelRatio);
+          composer.setPixelRatio(pixelRatio);
+          handleResize();
+          slowFrames = 0;
+          slowAvg = 1 / 60;
+        }
+      }
       const t = clock.elapsedTime;
 
       // frame-rate independent easing toward the section's reported progress
@@ -453,6 +497,9 @@ export default function IdeaLogoScene({ progressRef }) {
 
     return () => {
       cancelAnimationFrame(frameId);
+      frameId = -1; // block resume() after teardown
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
       resizeObserver.disconnect();
       composer.dispose();
       renderer.dispose();

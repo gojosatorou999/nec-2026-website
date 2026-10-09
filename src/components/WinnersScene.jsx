@@ -1,6 +1,6 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Lightformer, Billboard, MeshTransmissionMaterial } from '@react-three/drei';
+import { Environment, Lightformer, Billboard, MeshTransmissionMaterial, PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import { DEPARTMENTS } from '../data/site';
 import { DEPARTMENT_SVG_STRINGS } from './DepartmentIcons';
@@ -236,7 +236,7 @@ function FillerField({ geometry, anySelected }) {
 }
 
 /* ── One of the seven team cubes ─────────────────────────────────────────── */
-function DeptCube({ dept, geometry, selectedId, onSelect }) {
+function DeptCube({ dept, geometry, selectedId, onSelect, lowPower }) {
   const groupRef = useRef();
   const innerRef = useRef();
   const labelRef = useRef();
@@ -326,7 +326,7 @@ function DeptCube({ dept, geometry, selectedId, onSelect }) {
             document.body.style.cursor = '';
           }}
         >
-          {LOW_POWER ? (
+          {lowPower ? (
             /* A transmission material runs its own render pass per cube —
                seven of those is what made this unusable on a phone. The
                physical material approximates the same glass in one pass. */
@@ -475,7 +475,7 @@ function CameraRig({ selectedId }) {
   return null;
 }
 
-function Scene({ selectedId, onSelect }) {
+function Scene({ selectedId, onSelect, lowPower }) {
   const geometry = useMemo(() => makeRoundedBoxGeometry(CUBE, 0.1, 4), []);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
@@ -490,11 +490,14 @@ function Scene({ selectedId, onSelect }) {
           geometry={geometry}
           selectedId={selectedId}
           onSelect={onSelect}
+          lowPower={lowPower}
         />
       ))}
 
       {/* Lighting rig lifted from the reference build */}
-      <Environment resolution={LOW_POWER ? 128 : 256} frames={LOW_POWER ? 1 : Infinity}>
+      {/* Lightformers are static: one capture looks identical to re-rendering
+          the six-face cube map every frame, which it used to do on desktop. */}
+      <Environment resolution={LOW_POWER ? 128 : 256} frames={1}>
         <Lightformer
           form="rect"
           color="#94b2cb"
@@ -529,16 +532,29 @@ function Scene({ selectedId, onSelect }) {
 }
 
 export default function WinnersScene({ selectedId, onSelect }) {
+  // Desktops with a weak GPU (most laptops' integrated graphics) can't hold a
+  // frame rate with seven transmission passes either. When the measured fps
+  // drops, step down — first to the single-pass glass and a lower pixel ratio,
+  // then (a full-screen canvas on integrated graphics) to a sub-native ratio.
+  // Steps only ever go down, so the look never pops back and forth mid-visit.
+  const [level, setLevel] = useState(LOW_POWER ? 1 : 0);
+  const dpr = level === 0 ? [1, 2] : level === 1 ? [1, 1.25] : 0.75;
   return (
     <Canvas
       orthographic
       camera={{ position: [16, 22, 20], zoom: 78, near: -100, far: 200 }}
-      dpr={LOW_POWER ? [1, 1.5] : [1, 2]}
+      dpr={dpr}
       gl={{ antialias: true, alpha: true }}
       onPointerMissed={() => onSelect(null)}
       style={{ background: 'transparent' }}
     >
-      <Scene selectedId={selectedId} onSelect={onSelect} />
+      <PerformanceMonitor
+        onDecline={() => setLevel((l) => Math.min(2, l + 1))}
+        flipflops={Infinity}
+        bounds={() => [45, 90]}
+      >
+        <Scene selectedId={selectedId} onSelect={onSelect} lowPower={level > 0} />
+      </PerformanceMonitor>
     </Canvas>
   );
 }
