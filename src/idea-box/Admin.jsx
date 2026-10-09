@@ -240,12 +240,24 @@ function Login({ onSignedIn }) {
           {busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={16} />
         </Button>
       </form>
-      <aside className="ib-guide">
+      <aside className="ib-card ib-panel ib-info">
         <h3 className="ib-subtitle">Organizer workspace</h3>
-        <ul className="ib-plain-list">
-          <li>Review startup applications, accept or reject them and assign stalls.</li>
-          <li>Read visitor feedback, team introductions and Idea Box submissions.</li>
-          <li>Publish rapid-fire problem statements and export everything as CSV, Markdown or PDF.</li>
+        <ul className="ib-info-list">
+          {[
+            [Layers, 'Applications', 'Review startups, accept or reject them and assign stalls.'],
+            [MessageSquare, 'Submissions', 'Read visitor feedback, team introductions and Idea Box entries.'],
+            [Download, 'Challenges & exports', 'Publish rapid-fire problems and export records as CSV, Markdown or PDF.'],
+          ].map(([Icon, title, text]) => (
+            <li key={title}>
+              <span className="ib-way-icon" aria-hidden="true">
+                <Icon size={17} strokeWidth={1.8} />
+              </span>
+              <div>
+                <strong>{title}</strong>
+                <p>{text}</p>
+              </div>
+            </li>
+          ))}
         </ul>
       </aside>
     </div>

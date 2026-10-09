@@ -190,8 +190,15 @@ test("application lifecycle, stall collision, private feedback, ideas and logout
   assert.match(application.id, /^MGIT-/);
   assert.ok(application.token);
   assert.equal((await request("/startups")).data.length, 0);
+  // Reference only: the stage is shown, but nothing private.
+  const limited = await request("/applications/" + application.id + "/status");
+  assert.equal(limited.status, 200);
+  assert.equal(limited.data.status, "Submitted");
+  assert.equal(limited.data.verified, false);
+  assert.equal(limited.data.name, undefined);
+  assert.equal(limited.data.feedback, undefined);
   assert.equal(
-    (await request("/applications/" + application.id + "/status")).status,
+    (await request("/applications/MGIT-0000000000/status")).status,
     404,
   );
   assert.equal(

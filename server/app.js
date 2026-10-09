@@ -290,13 +290,25 @@ app.post("/api/applications", async (req, res) => {
   res.status(201).json(result);
 });
 app.get("/api/applications/:id/status", async (req, res) => {
-  const a = await db.get("startup_applications", req.params.id);
-  if (!a || hash(req.headers["x-tracking-token"] || "") !== a.trackingHash)
+  const id = String(req.params.id).trim().toUpperCase();
+  const a = await db.get("startup_applications", id);
+  if (!a)
     return res.status(404).json({
-      error:
-        "Application not found. Check your reference ID and private access code.",
+      error: `No application uses the reference ${id.slice(0, 32)}. Check it against the confirmation shown when you applied.`,
+    });
+  const token = String(req.headers["x-tracking-token"] || "").trim().toLowerCase();
+  // The reference alone confirms the application exists and where it is in
+  // review — references are random and not guessable, and nothing private is
+  // returned. The access code unlocks the startup name, stall and inbox.
+  if (!token || hash(token) !== a.trackingHash)
+    return res.json({
+      id: a.id,
+      status: a.status,
+      verified: false,
+      codeProvided: !!token,
     });
   res.json({
+    verified: true,
     id: a.id,
     name: a.name,
     status: a.status,

@@ -878,7 +878,7 @@
 .ib-codes { display: grid; gap: 14px; width: 100%; }
 .ib-copy { display: flex; flex-direction: column; gap: 8px; }
 .ib-copy-row { display: flex; gap: 8px; align-items: center; }
-.ib-copy-row input.is-mono { font-family: var(--font-mono) !important; font-size: 0.95rem !important; letter-spacing: 0.04em; }
+.ib-copy-row input.is-mono { font-family: var(--font-mono) !important; font-size: 1rem !important; letter-spacing: 0.04em; }
 
 /* Status */
 .ib-status-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -1094,15 +1094,116 @@
 .ib-file strong { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ib-downloads { display: flex; flex-direction: column; gap: 10px; }
 
+/* Shortcut strip above the site footer */
 .ib-footer-links {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 22px;
-  padding-top: 20px;
-  font-size: 0.84rem;
+  gap: 6px;
+  width: max-content;
+  max-width: 100%;
+  margin: clamp(8px, 2vw, 20px) auto 0;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--glass-brd);
+  background: rgba(10, 14, 24, 0.82);
 }
-.ib-footer-links a { color: var(--text-3); text-decoration: none; min-height: 40px; display: inline-flex; align-items: center; }
-.ib-footer-links a:hover { color: var(--text); }
+.ib-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  color: var(--text-2);
+  font-size: 0.86rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.25s, color 0.25s;
+}
+.ib-footer-links a svg { color: var(--peri); flex-shrink: 0; }
+@media (max-width: 420px) {
+  .ib-footer-links { gap: 2px; }
+  .ib-footer-links a { padding: 0 11px; font-size: 0.8rem; gap: 6px; }
+}
+.ib-footer-links a:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+.ib-footer-links > span { width: 1px; height: 18px; background: var(--glass-brd); }
+
+/* Side panel with icon rows (status help, organizer sign-in) */
+.ib-info .ib-subtitle { margin-top: 0; }
+.ib-info-list { list-style: none; display: flex; flex-direction: column; gap: 18px; margin: 18px 0 20px; }
+.ib-info-list li { display: flex; gap: 14px; align-items: flex-start; }
+.ib-info-list strong { display: block; font-size: 0.96rem; font-weight: 600; }
+.ib-info-list p { margin-top: 2px; color: var(--text-2); font-size: 0.89rem; line-height: 1.6; }
+.ib-info .ib-note { padding-top: 16px; border-top: 1px solid var(--ib-line); }
+
+/* Status result */
+.ib-status { display: flex; flex-direction: column; gap: 18px; }
+.ib-status .ib-status-head { margin-bottom: 0; align-items: flex-start; }
+.ib-status .ib-status-head .eyebrow { margin-bottom: 6px; }
+.ib-track-steps { list-style: none; display: flex; gap: 0; }
+.ib-track-steps li {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 0.8rem;
+}
+.ib-track-steps li::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 26px;
+  right: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.ib-track-steps li:last-child::after { display: none; }
+.ib-track-steps li.is-done::after { background: linear-gradient(90deg, var(--mint), rgba(122, 255, 207, 0.3)); }
+.ib-track-dot {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  color: var(--ink);
+}
+.ib-track-steps li.is-done { color: var(--text-2); }
+.ib-track-steps li.is-done .ib-track-dot { background: var(--mint); border-color: var(--mint); }
+.ib-track-steps li.is-current { color: var(--text); }
+.ib-track-steps li.is-current .ib-track-dot { border-color: var(--bulb); box-shadow: 0 0 0 4px rgba(255, 214, 92, 0.15); }
+.ib-locked {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(163, 178, 255, 0.22);
+  background: rgba(163, 178, 255, 0.05);
+  color: var(--peri);
+}
+.ib-locked svg { flex-shrink: 0; margin-top: 2px; }
+.ib-locked p { color: var(--text-2); font-size: 0.9rem; line-height: 1.6; }
+.ib-status-facts { display: flex; flex-wrap: wrap; gap: 10px; }
+.ib-status-facts > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--ib-line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  font-size: 0.86rem;
+}
+.ib-status-facts svg { color: var(--peri); }
+/* Font size stays 1rem (from the base rule) so iOS doesn't zoom on focus. */
+.ib input.is-mono { font-family: var(--font-mono) !important; letter-spacing: 0.02em; }
 
 /* ─── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {

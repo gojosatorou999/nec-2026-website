@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, CalendarDays, ClipboardCheck, Lightbulb, MapPin, Store, Zap } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, CalendarDays, ClipboardCheck, KeyRound, Lightbulb, MapPin, Store, Zap } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WaterLayer from './components/WaterLayer';
@@ -305,9 +305,16 @@ export default function IdeaBoxPage() {
           )}
         </main>
 
-        <div className="ib-footer-links ib-wrap">
-          <a href="#status">Track application</a>
-          <a href="#admin">Organizer sign-in</a>
+        <div className="ib-wrap">
+          <nav className="ib-footer-links" aria-label="Idea Box shortcuts">
+            <a href="#status">
+              <ClipboardCheck size={15} aria-hidden="true" /> Track an application
+            </a>
+            <span aria-hidden="true" />
+            <a href="#admin">
+              <KeyRound size={15} aria-hidden="true" /> Organizer sign-in
+            </a>
+          </nav>
         </div>
         <Footer onHome={false} />
       </div>
