@@ -785,6 +785,24 @@ h1, h2, h3, h4 {
   .detail-panel { border-radius: var(--r-xl) 0 0 0; }
 }
 
+/* ═══ MONOGRAM DISC ═══════════════════════════════════════════════════════
+   Initials disc on the mentor and host cards. */
+.monogram {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  background: linear-gradient(140deg, var(--accent, var(--peri)), rgba(255, 255, 255, 0.9));
+  box-shadow: 0 10px 30px -10px var(--accent, var(--peri));
+}
+
 /* ═══ SOCIAL BUTTON ═══════════════════════════════════════════════════════ */
 .social-btn {
   display: inline-grid;
