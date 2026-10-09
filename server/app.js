@@ -419,7 +419,7 @@ app.post("/api/ideas", async (req, res) => {
 app.get("/api/admin", auth, async (req, res) =>
   res.json({
     applications: (await db.all("startup_applications")).map(
-      ({ trackingHash, ...a }) =>
+      ({ trackingHash: _private, ...a }) =>
         req.get("X-Expo-Media") === "links"
           ? uploadLinks(a, "/api/admin/files/applications/" + a.id)
           : a,
@@ -614,7 +614,7 @@ app.get("/api/admin/export", auth, async (req, res) => {
 app.use("/api", async (req, res) =>
   res.status(404).json({ error: "Endpoint not found." }),
 );
-app.use((error, req, res, next) => {
+app.use((error, req, res, _next) => {
   if (error.code === "23505")
     return res.status(409).json({
       error: "That stall is already assigned. Choose another stall number.",

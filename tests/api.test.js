@@ -1,18 +1,12 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { spawn, execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { DatabaseSync } from "node:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import { Pool } from "pg";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { validateApplication } from "../shared/schema.js";
 
-const dir = mkdtempSync(path.join(tmpdir(), "mgit-expo-test-"));
 const base = "http://localhost:5199/api";
 let server, cookie, application, testPool, adminPool, testDatabaseUrl;
 const testDatabaseName = "expo_test_" + randomUUID().replaceAll("-", "");
@@ -86,12 +80,10 @@ before(async () => {
     env: {
       ...process.env,
       PORT: "5199",
-      DATA_DIR: dir,
       SUPABASE_DB_URL: testDatabaseUrl,
       DATABASE_LOCAL_TEST: "true",
       ADMIN_EMAIL: "test@mgit.ac.in",
       ADMIN_PASSWORD: "test-only-password",
-      SEED_DEMO: "false",
     },
     stdio: "pipe",
   });
@@ -115,9 +107,6 @@ after(async () => {
     );
     await adminPool.end();
   }
-  if (!path.resolve(dir).startsWith(path.resolve(tmpdir()) + path.sep))
-    throw new Error("Unsafe test cleanup path");
-  rmSync(dir, { recursive: true, force: true });
 });
 test("registration validator rejects missing fields, invalid URLs and incomplete teams", () => {
   assert.equal(Object.keys(validateApplication(valid)).length, 0);
@@ -380,7 +369,6 @@ test("applications and private feedback survive a server restart", async () => {
     env: {
       ...process.env,
       PORT: "5199",
-      DATA_DIR: dir,
       SUPABASE_DB_URL: testDatabaseUrl,
       DATABASE_LOCAL_TEST: "true",
     },
@@ -761,90 +749,6 @@ test("schema reruns preserve records and anonymous roles cannot read submissions
     connection.release();
   }
 });
-test("SQLite import verifies every record, preserves uploads and can rerun safely", async () => {
-  const file = path.join(dir, "migration.sqlite");
-  const source = new DatabaseSync(file);
-  for (const table of [
-    "users",
-    "startup_applications",
-    "startup_members",
-    "feedback",
-    "idea_submissions",
-    "rapid_fire_submissions",
-    "startup_products",
-    "startup_requirements",
-    "join_interests",
-    "problem_statements",
-    "sessions",
-    "stall_assignments",
-    "startups",
-  ])
-    source.exec(
-      "CREATE TABLE " +
-        table +
-        " (id TEXT PRIMARY KEY,data TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)",
-    );
-  const legacy = {
-    ...valid,
-    name: "Legacy import",
-    status: "Submitted",
-    trackingHash: "preserved-hash",
-    logo: valid.logo,
-  };
-  source
-    .prepare("INSERT INTO startup_applications(id,data) VALUES(?,?)")
-    .run("MGIT-LEGACY", JSON.stringify(legacy));
-  source.prepare("INSERT INTO feedback(id,data) VALUES(?,?)").run(
-    "legacy-feedback",
-    JSON.stringify({
-      startupId: "historical-profile",
-      overall: "Do not omit historical records",
-    }),
-  );
-  source.close();
-  const exec = promisify(execFile),
-    options = {
-      env: {
-        ...process.env,
-        SUPABASE_DB_URL: testDatabaseUrl,
-        DATABASE_LOCAL_TEST: "true",
-      },
-    };
-  await exec(process.execPath, ["scripts/migrate-sqlite.mjs", file], options);
-  assert.deepEqual(
-    (
-      await testPool.query(
-        "SELECT data FROM expo.startup_applications WHERE id='MGIT-LEGACY'",
-      )
-    ).rows[0].data,
-    legacy,
-  );
-  await exec(process.execPath, ["scripts/migrate-sqlite.mjs", file], options);
-  assert.equal(
-    (
-      await testPool.query(
-        "SELECT count(*)::int AS n FROM expo.feedback WHERE id='legacy-feedback'",
-      )
-    ).rows[0].n,
-    1,
-  );
-  await testPool.query(
-    "UPDATE expo.startup_applications SET data=jsonb_set(data,'{name}','\"Changed in Supabase\"') WHERE id='MGIT-LEGACY'",
-  );
-  await assert.rejects(
-    exec(process.execPath, ["scripts/migrate-sqlite.mjs", file], options),
-    /Conflict/,
-  );
-  assert.equal(
-    (
-      await testPool.query(
-        "SELECT data->>'name' AS name FROM expo.startup_applications WHERE id='MGIT-LEGACY'",
-      )
-    ).rows[0].name,
-    "Changed in Supabase",
-  );
-});
-
 test("media links keep listings small and enforce public approval and admin access", async () => {
   const login = await request("/login", {
     method: "POST",

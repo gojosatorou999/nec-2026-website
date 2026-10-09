@@ -7,8 +7,8 @@ import WaterLayer from './WaterLayer';
    ───────────────────────────────────────────────────────────────────────────
    A vertical "circuit board" trace that draws itself as you scroll, with
    glowing solder-point nodes that light up event-by-event. Much more
-   readable than the speedometer — every event is visible at once, and the
-   active one is highlighted as you move down.
+   every event is visible at once, and the active one is highlighted as you
+   move down.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const EVENTS = [
@@ -103,7 +103,6 @@ function buildTracePath(events) {
   // Path is 80px wide, height is (events.length * NODE_GAP) px
   // Even events: connector comes from right; odd from left — chevron pattern
   const NODE_GAP = 110;
-  const H = events.length * NODE_GAP;
   // Simple straight vertical trace centered in the 80px column
   return `M40,0 ${events.map((_, i) => `L40,${(i + 1) * NODE_GAP}`).join(' ')}`;
 }

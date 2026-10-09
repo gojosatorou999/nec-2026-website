@@ -140,17 +140,6 @@ img, svg { display: block; max-width: 100%; }
     0 24px 60px -18px rgba(0, 0, 0, 0.75);
 }
 
-.glass-strong {
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid var(--glass-brd-lit);
-  border-radius: var(--r-lg);
-  box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.1) inset,
-    0 30px 80px -20px rgba(0, 0, 0, 0.8);
-}
-
 /* Backdrop-filter is unsupported or disabled on a fair share of Android
    browsers (Samsung Internet, some Chrome/GPU configs). There the glass
    surfaces — which lean entirely on the blur for legibility — render as
@@ -163,13 +152,10 @@ img, svg { display: block; max-width: 100%; }
   .glass-sheen,
   .nav-sheet,
   .btn-ghost,
-  .tile,
-  .person-card,
   .social-btn,
   .legend-chip {
     background: rgba(17, 23, 38, 0.96) !important;
   }
-  .glass-strong,
   .detail-panel {
     background: rgba(20, 27, 44, 0.98) !important;
   }
@@ -196,8 +182,6 @@ img, svg { display: block; max-width: 100%; }
 }
 
 /* ═══ TYPOGRAPHY ══════════════════════════════════════════════════════════ */
-.font-display { font-family: var(--font-display); }
-.font-body    { font-family: var(--font-body); }
 .font-mono    { font-family: var(--font-mono); }
 
 h1, h2, h3, h4 {
@@ -334,51 +318,7 @@ h1, h2, h3, h4 {
 .nav-link.is-active { color: var(--text); }
 .nav-link.is-active::after { width: 100%; }
 
-/* ═══ ROSTER TILE ═════════════════════════════════════════════════════════ */
-.tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 22px;
-  text-align: left;
-  border-radius: var(--r-md);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-brd);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.55s var(--ease-expo), border-color 0.4s var(--ease-soft),
-    background 0.4s var(--ease-soft), box-shadow 0.55s var(--ease-expo);
-}
-
-.tile::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  opacity: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    120% 90% at 50% 0%,
-    rgba(163, 178, 255, 0.16),
-    transparent 70%
-  );
-  transition: opacity 0.5s var(--ease-soft);
-}
-
-.tile:hover,
-.tile[data-active='true'] {
-  transform: translateY(-5px);
-  border-color: var(--glass-brd-lit);
-  background: var(--glass-bg-strong);
-  box-shadow: 0 26px 60px -22px rgba(0, 0, 0, 0.9);
-}
-.tile:hover::after,
-.tile[data-active='true']::after { opacity: 1; }
-
-/* Reveal-on-scroll for tiles */
+/* ═══ REVEAL ON SCROLL ═══════════════════════════════════════════════════ */
 .reveal {
   opacity: 0;
   transform: translateY(26px);
@@ -727,7 +667,6 @@ h1, h2, h3, h4 {
 
 /* The pile needs opaque cards — glass over glass turns to mud once three of
    them overlap, and you stop being able to read the one on top. */
-.stack-item > .person-card,
 .stack-item > .stack-card {
   background: linear-gradient(180deg, rgb(24, 32, 52), rgb(13, 18, 31));
   backdrop-filter: none;
@@ -846,55 +785,6 @@ h1, h2, h3, h4 {
   .detail-panel { border-radius: var(--r-xl) 0 0 0; }
 }
 
-/* ═══ FACULTY / SHAPER CARDS ══════════════════════════════════════════════ */
-.person-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: clamp(24px, 3vw, 36px);
-  border-radius: var(--r-xl);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-brd);
-  backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
-  overflow: hidden;
-  transition: transform 0.6s var(--ease-expo), border-color 0.4s var(--ease-soft),
-    box-shadow 0.6s var(--ease-expo);
-}
-.person-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--glass-brd-lit);
-  box-shadow: 0 34px 80px -28px rgba(0, 0, 0, 0.9);
-}
-
-.person-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent, var(--peri)), transparent);
-  opacity: 0.8;
-  pointer-events: none;
-}
-
-/* Monogram disc */
-.monogram {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  border-radius: var(--r-pill);
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-  background: linear-gradient(140deg, var(--accent, var(--peri)), rgba(255, 255, 255, 0.9));
-  box-shadow: 0 10px 30px -10px var(--accent, var(--peri));
-}
-
 /* ═══ SOCIAL BUTTON ═══════════════════════════════════════════════════════ */
 .social-btn {
   display: inline-grid;
@@ -918,188 +808,7 @@ h1, h2, h3, h4 {
   border-color: var(--glass-brd-lit);
 }
 
-/* ═══ DEPARTMENT CUBES ════════════════════════════════════════════════════
-   The roster display from the WinnerPagetemp reference: a field of glowing
-   blue boxes, one per team, that turn toward you on hover and open a detail
-   panel on click. Built with CSS 3D rather than a third WebGL context, so it
-   stays cheap next to the hero canvas and keeps the labels crisp/selectable.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-.cube-scene {
-  perspective: 1200px;
-  perspective-origin: 50% 38%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: clamp(10px, 1.6vw, 22px);
-}
-
-.cube-cell {
-  --cube: clamp(96px, 11vw, 132px);
-  --accent: #72afff;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 30px 14px 22px;
-  border-radius: var(--r-lg);
-  background: transparent;
-  border: 1px solid transparent;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.45s var(--ease-soft), border-color 0.45s var(--ease-soft),
-    transform 0.6s var(--ease-expo);
-}
-
-.cube-cell:hover,
-.cube-cell[data-active='true'] {
-  background: var(--glass-bg);
-  border-color: var(--glass-brd);
-  transform: translateY(-5px);
-}
-
-/* Pool of light the box sits in */
-.cube-cell::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: calc(30px + var(--cube) * 0.78);
-  width: calc(var(--cube) * 1.15);
-  height: calc(var(--cube) * 0.38);
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%);
-  filter: blur(11px);
-  opacity: 0.5;
-  pointer-events: none;
-  transition: opacity 0.5s var(--ease-soft);
-}
-.cube-cell:hover::after,
-.cube-cell[data-active='true']::after { opacity: 0.95; }
-
-.cube-stage {
-  display: block;
-  position: relative;
-  width: var(--cube);
-  height: var(--cube);
-  transform-style: preserve-3d;
-  animation: float-y 7s ease-in-out infinite;
-}
-
-.cube3d {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transform: rotateX(-20deg) rotateY(28deg);
-  transition: transform 1.05s var(--ease-expo);
-}
-
-.cube-cell:hover .cube3d,
-.cube-cell[data-active='true'] .cube3d {
-  transform: rotateX(-9deg) rotateY(-12deg) scale(1.06);
-}
-
-.cube-face {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--accent) 30%, transparent),
-    color-mix(in srgb, var(--accent) 8%, transparent) 55%,
-    color-mix(in srgb, var(--accent) 22%, transparent)
-  );
-  box-shadow: inset 0 0 36px color-mix(in srgb, var(--accent) 22%, transparent);
-}
-
-.f-front  { transform: translateZ(calc(var(--cube) / 2)); }
-.f-back   { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
-.f-right  { transform: rotateY(90deg)  translateZ(calc(var(--cube) / 2)); }
-.f-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
-.f-top    { transform: rotateX(90deg)  translateZ(calc(var(--cube) / 2)); }
-.f-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
-
-/* Lit-from-within core */
-.cube-core {
-  position: absolute;
-  inset: 22%;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 85%, white), transparent 68%);
-  filter: blur(9px);
-  opacity: 0.65;
-  transform: translateZ(0);
-  pointer-events: none;
-  transition: opacity 0.5s var(--ease-soft);
-}
-.cube-cell:hover .cube-core,
-.cube-cell[data-active='true'] .cube-core { opacity: 1; }
-
-.cube-emoji {
-  font-size: calc(var(--cube) * 0.36);
-  line-height: 1;
-  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5));
-}
-
-/* Count chip riding the front face */
-.cube-count {
-  position: absolute;
-  right: -9px;
-  top: -9px;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 7px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  background: var(--ink-2);
-  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
-  color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cube-stage { animation: none; }
-}
-
 /* ═══ WINNERS PAGE ════════════════════════════════════════════════════════ */
-
-.winners-stage {
-  position: relative;
-  width: 100%;
-  height: clamp(380px, 62vh, 660px);
-  margin-bottom: clamp(34px, 5vw, 60px);
-  /* The reference build sits its cubes on near-black. Kept light enough that
-     the water caustics behind still read through — at 0.92 it was opaque
-     enough to erase them completely. */
-  background: radial-gradient(70% 70% at 50% 45%, rgba(5, 5, 5, 0.6), transparent 78%);
-}
-
-.winners-stage canvas { touch-action: pan-y; }
-
-.winners-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  margin: 0;
-  font-size: 0.58rem;
-  pointer-events: none;
-  opacity: 0.55;
-  animation: soft-pulse 3.4s ease-in-out infinite;
-}
-
-.winners-legend {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
-  gap: 10px;
-}
 
 .legend-chip {
   --accent: var(--peri);
@@ -1270,8 +979,6 @@ html.lenis { scroll-behavior: auto; }
 @media (pointer: coarse) {
   .btn-ghost,
   .chip,
-  .tile,
-  .person-card,
   .social-btn,
   .legend-chip {
     backdrop-filter: none !important;
@@ -1279,13 +986,11 @@ html.lenis { scroll-behavior: auto; }
     background: rgba(17, 23, 38, 0.92) !important;
   }
   .glass,
-  .glass-strong,
   .detail-panel {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
   }
   .glass { background: rgba(14, 19, 32, 0.78); }
-  .glass-strong,
   .detail-panel { background: rgba(16, 22, 37, 0.9); }
   .panel-scrim {
     backdrop-filter: none !important;

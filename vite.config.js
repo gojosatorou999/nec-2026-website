@@ -33,7 +33,7 @@ function ideaBoxApi() {
 // Real pages, not one SPA with anchors:
 //   /               → the main site
 //   /winners.html   → the NEC 2026 winners, a genuine navigation away
-//   /about.html     → about the club, with the speedometer timeline below it
+//   /about.html     → about the club and the four bodies behind NEC 2026
 //   /idea-box.html  → the Idea Box: startup expo registration, idea and
 //                     rapid-fire submissions, application tracking and the
 //                     organizer dashboard (backed by /api)

@@ -81,37 +81,6 @@ export const ABOUT_ENTITIES = [
   },
 ];
 
-/* ─── "The Challenge" explainer cards ────────────────────────────────────── */
-export const ABOUT_CARDS = [
-  {
-    id: 'challenge',
-    kicker: 'The Event',
-    title: 'Asia’s largest business model competition',
-    body:
-      'The National Entrepreneurship Challenge is E-Cell IIT Bombay’s flagship contest, run across hundreds of campuses nationwide. Teams take an idea from a one line premise to a defensible business model, then pitch it against the best student founders in the country.',
-    accent: 'var(--peri)',
-    stat: { value: '2026', label: 'Edition' },
-  },
-  {
-    id: 'delegation',
-    kicker: 'Our Delegation',
-    title: '22 selected to represent MGIT',
-    body:
-      'Twenty-two students from across MGIT earned a place in the delegation travelling to IIT Bombay. They were picked on the strength of their ideation, research and pitching across our internal selection rounds.',
-    accent: 'var(--mint)',
-    stat: { value: '22', label: 'Winners' },
-  },
-  {
-    id: 'collab',
-    kicker: 'The Collaboration',
-    title: 'Idea Incubator × E-Cell IIT Bombay',
-    body:
-      'Idea Incubator is MGIT’s entrepreneurship body under the Institution’s Innovation Council. Our campus ambassadors bridge the two institutions — carrying IIT Bombay’s programming to MGIT, and MGIT’s builders to Powai.',
-    accent: 'var(--violet)',
-    stat: { value: 'IIC', label: 'MoE Recognised' },
-  },
-];
-
 /* ─── Mentors & Leadership ───────────────────────────────────────────────────
    Big cards. These are the people backing the club institutionally.
    Names, designations and photo paths are confirmed. The `body` copy is still
@@ -171,16 +140,6 @@ export const HOSTS = [
     body:
       'Directs NEC 2026 at MGIT and runs the technical side of Idea Incubator. As campus ambassador he is the direct line between MGIT and E-Cell IIT Bombay.',
   },
-  {
-  id:'vaishnavi',
-  name:'G Vaishnavi',
-  role:'Coordinator,NEC 2026 · Developer,Idea Incubator MGIT · Campus Ambassador, IIT Bomabay',
-  accent:'var(--peri)',
-  initials:'GV',
-  body:'Coordinated the entire operations and took care of the logistics for the tasks and events',
-},
-  
-
   {
     id: 'balaji',
     name: 'T Balaji',

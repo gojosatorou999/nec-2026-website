@@ -850,8 +850,6 @@
 }
 .ib-guide-list strong { display: block; font-size: 0.96rem; font-weight: 600; }
 .ib-guide-list p { margin-top: 3px; color: var(--text-2); font-size: 0.88rem; line-height: 1.6; }
-.ib-plain-list { display: flex; flex-direction: column; gap: 10px; padding-left: 18px; margin-bottom: 18px; color: var(--text-2); font-size: 0.92rem; line-height: 1.65; }
-.ib-plain-list li::marker { color: var(--peri); }
 
 /* Registration */
 .ib-reg {

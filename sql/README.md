@@ -1,4 +1,4 @@
-# Supabase setup and safe cutover
+# Supabase setup
 
 This project uses the **new Supabase project's PostgreSQL database** through the Express server. Browsers never receive database credentials. The private `expo` schema has row-level security and no access for Supabase's `anon` or `authenticated` roles. Do not add `expo` to the exposed Data API schemas.
 
@@ -18,18 +18,14 @@ Use your actual new project's connection string. Percent-encode special characte
 
 Official references: [database connections](https://supabase.com/docs/guides/database/connecting-to-postgres), [securing data](https://supabase.com/docs/guides/database/secure-data), [row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security).
 
-## 3. Preserve the current local data
+## 3. Check the connection
 
-1. Stop the old SQLite application server and keep it stopped. This prevents new writes after the migration snapshot.
-2. Run `npm run db:setup` (or run the SQL manually).
-3. **Before starting the new server**, run `npm run db:migrate`. To import a different source: `npm run db:migrate -- C:/path/to/expo.sqlite`.
-4. Run `npm run db:check` and inspect the verified counts.
-5. Run `npm run dev`. `/api/health` must return HTTP 200 with `ready: true` and `storage: supabase`.
-6. Sign in at `/#admin`, inspect submissions and compare the migration counts. The existing admin email/password, hashed sessions and founder tracking hashes are retained by the import.
+1. Run `npm run db:setup` (or run the SQL manually).
+2. Run `npm run db:check` and inspect the verified counts.
+3. Run `npm run dev`. `/api/health` must return HTTP 200 with `ready: true` and `storage: supabase`.
+4. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` **before the first launch against an empty database** — startup creates the first organizer account from them. They are ignored once an account exists and never reset an existing password. Sign in at `/idea-box.html#admin`.
 
-The importer first creates a consistent SQLite backup under the ignored `.data/backups/` directory. It imports **all recognized source tables**, verifies every source ID and JSON field in one PostgreSQL transaction, refuses unknown tables and conflicting records, and rolls back on any mismatch. It detects source changes during import. It never deletes or overwrites the source database. A rerun skips identical records and rejects different records rather than replacing them. Resolve conflicts deliberately before retrying. Keep the original database and backup until you verify the new project.
-
-Do not start an empty Supabase application server before migration: startup provisioning would create another organizer account. If there are no local records to migrate, configure `ADMIN_EMAIL` and `ADMIN_PASSWORD` before the first launch, using your chosen admin credentials.
+If you point the server at a database that already holds expo data, the existing accounts, sessions, applications and founder tracking codes are used as they are.
 
 ## Data map
 
@@ -61,7 +57,7 @@ The complete submitted JSON is the canonical record, so changing form fields can
 - Form data and retry keys stay only in current-page memory. The browser writes no drafts or submissions to localStorage or IndexedDB. A confirmed submission is saved in Supabase.
 - Approval, public profile and stall assignment update atomically. A database unique index prevents simultaneous duplicate stall assignments.
 - Admin queries use PostgreSQL directly with no 1,000-row Data API cap. The dashboard refreshes every 20 seconds while visible and offers manual refresh. Failed refreshes show errors and do not claim a new sync time.
-- Without Supabase configuration, the API reports unavailability and accepts no submissions. It never silently falls back to SQLite. Existing SQLite files are migration sources only.
+- Without Supabase configuration, the API reports unavailability and accepts no submissions.
 - Unsubmitted forms are not persisted. Keep the page open until a successful response, then save the reference and tracking code yourself.
 
 ## Hosting and backups
