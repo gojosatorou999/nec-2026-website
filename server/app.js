@@ -21,6 +21,9 @@ async function initialize() {
   if (!initialization) {
     initialization = (async () => {
       await db.ready();
+      // Normal case: an admin already exists, so skip the locked bootstrap
+      // transaction entirely (it cost several round trips on every cold start).
+      if ((await db.query("SELECT 1 FROM expo.users LIMIT 1")).rowCount) return;
       await db.transaction(async (tx) => {
         await tx.query(
           "SELECT pg_advisory_xact_lock(hashtextextended('expo-admin-bootstrap',0))",
@@ -247,44 +250,59 @@ app.post("/api/applications", async (req, res) => {
     const id = "MGIT-" + randomBytes(5).toString("hex").toUpperCase();
     const token = randomBytes(24).toString("hex");
 
-    await tx.put("startup_applications", id, {
-      ...data,
-      status: "Submitted",
-      trackingHash: hash(token),
-      notes: "",
-      submittedAt: new Date().toISOString(),
-    });
-    for (const m of data.members)
-      await tx.put("startup_members", randomUUID(), {
-        applicationId: id,
-        ...m,
-      });
-    await tx.put("startup_products", id, {
-      applicationId: id,
-      description: data.productDescription,
-      status: data.productStatus,
-      images: data.images,
-      demo: data.demo,
-      prototype: data.prototype,
-      video: data.video,
-    });
-    await tx.put("startup_requirements", id, {
-      applicationId: id,
-      ...Object.fromEntries(
-        [
-          "display",
-          "displayOther",
-          "stallRequirements",
-          "wallSpace",
-          "demonstration",
-          "electricity",
-          "table",
-          "monitor",
-          "internet",
-          "otherRequirements",
-        ].map((k) => [k, data[k]]),
-      ),
-    });
+    // One statement for every row of the application (see Database.putMany).
+    await tx.putMany([
+      [
+        "startup_applications",
+        id,
+        {
+          ...data,
+          status: "Submitted",
+          trackingHash: hash(token),
+          notes: "",
+          submittedAt: new Date().toISOString(),
+        },
+      ],
+      ...data.members.map((m) => [
+        "startup_members",
+        randomUUID(),
+        { applicationId: id, ...m },
+      ]),
+      [
+        "startup_products",
+        id,
+        {
+          applicationId: id,
+          description: data.productDescription,
+          status: data.productStatus,
+          images: data.images,
+          demo: data.demo,
+          prototype: data.prototype,
+          video: data.video,
+        },
+      ],
+      [
+        "startup_requirements",
+        id,
+        {
+          applicationId: id,
+          ...Object.fromEntries(
+            [
+              "display",
+              "displayOther",
+              "stallRequirements",
+              "wallSpace",
+              "demonstration",
+              "electricity",
+              "table",
+              "monitor",
+              "internet",
+              "otherRequirements",
+            ].map((k) => [k, data[k]]),
+          ),
+        },
+      ],
+    ]);
     return { id, token, status: "Submitted" };
   });
   res.status(201).json(result);

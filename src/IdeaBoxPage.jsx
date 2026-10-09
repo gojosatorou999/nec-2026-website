@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, CalendarDays, ClipboardCheck, KeyRound, Lightbulb, MapPin, Store, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ClipboardCheck, KeyRound, Lightbulb, MapPin, Store, Zap } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import WaterLayer from './components/WaterLayer';
@@ -52,10 +52,10 @@ VIEWS.rapid = VIEWS.ideas;
 VIEWS.organizer = VIEWS.admin;
 
 const TABS = [
-  ['', 'Overview'],
-  ['register', 'Register a startup'],
-  ['ideas', 'Share an idea'],
-  ['status', 'Track application'],
+  ['', 'Overview', 'Overview'],
+  ['register', 'Register a startup', 'Register'],
+  ['ideas', 'Share an idea', 'Ideas'],
+  ['status', 'Track application', 'Track'],
 ];
 
 const routeFromHash = () => decodeURIComponent(window.location.hash.slice(1));
@@ -64,14 +64,17 @@ function SubNav({ route }) {
   const current = OVERVIEW.includes(route) ? '' : VIEWS[route]?.tab;
   return (
     <nav className="ib-subnav" aria-label="Idea Box sections" data-lenis-prevent-horizontal>
-      {TABS.map(([hash, label]) => (
+      {TABS.map(([hash, label, short]) => (
         <a
           key={label}
           href={'#' + (hash || 'home')}
           className={'ib-subnav-link' + (current === hash ? ' is-on' : '')}
           aria-current={current === hash ? 'page' : undefined}
         >
-          {label}
+          <span className="ib-tab-long">{label}</span>
+          <span className="ib-tab-short" aria-hidden="true">
+            {short}
+          </span>
         </a>
       ))}
     </nav>
@@ -335,22 +338,21 @@ export default function IdeaBoxPage() {
 
         <main id="top">
           {isOverview ? (
-            <>
-              <div className="ib-wrap ib-top">
-                <SubNav route={route} />
-              </div>
-              <div className="ib-wrap">
-                <Overview startups={startups} loading={loading} openChallenges={openChallenges} />
-              </div>
-            </>
+            <div className="ib-wrap ib-top">
+              <Overview startups={startups} loading={loading} openChallenges={openChallenges} />
+            </div>
           ) : (
             <div className="ib-wrap ib-top">
-              <SubNav route={route} />
               <header className="ib-page-head">
+                <a href="#home" className="ib-crumb">
+                  <ArrowLeft size={14} aria-hidden="true" /> Idea Box
+                </a>
                 <p className="eyebrow ib-eyebrow">{view.eyebrow}</p>
                 <h1 className="ib-page-title">{view.title}</h1>
                 <p className="ib-lede">{view.lede}</p>
               </header>
+              {/* Section tabs sit under the heading, spanning the content width */}
+              <SubNav route={route} />
               {route === 'register' ? (
                 <Registration />
               ) : route === 'ideas' || route === 'rapid' ? (

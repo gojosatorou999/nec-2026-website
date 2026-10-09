@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Copy, LoaderCircle, Upload, X } from 'lucide-react';
+import { Check, Copy, Download, LoaderCircle, Upload, X } from 'lucide-react';
 import { fieldVisible, memberFields } from '../../shared/schema.js';
+import { prepareImage, readFile } from './image.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    IDEA BOX — UI PRIMITIVES
@@ -64,37 +65,81 @@ export function EmptyState({ icon: Icon, title, children, action }) {
   );
 }
 
-/** Read-only value with a copy button — used for reference and access codes. */
-export function CopyField({ label, value }) {
-  const [copied, setCopied] = useState(false);
-  const inputRef = useRef(null);
-  const copy = async () => {
+async function copyText(text, inputEl) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Older iOS / insecure contexts: fall back to selecting + the legacy command.
     try {
-      await navigator.clipboard.writeText(value);
+      const el = inputEl || Object.assign(document.createElement('textarea'), { value: text });
+      if (!inputEl) document.body.appendChild(el);
+      el.select();
+      el.setSelectionRange?.(0, text.length);
+      const ok = document.execCommand?.('copy');
+      if (!inputEl) el.remove();
+      return !!ok;
     } catch {
-      // Older iOS / insecure contexts: fall back to a selection the user can copy.
-      inputRef.current?.select();
-      document.execCommand?.('copy');
+      return false;
     }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+  }
+}
+
+/** Read-only value with a labelled Copy button — used for reference and access codes. */
+export function CopyField({ label, value }) {
+  const [state, setState] = useState('idle'); // idle | copied | failed
+  const inputRef = useRef(null);
+  const id = 'copy-' + label.replace(/\s+/g, '-').toLowerCase();
+  const copy = async () => {
+    setState((await copyText(value, inputRef.current)) ? 'copied' : 'failed');
+    setTimeout(() => setState('idle'), 2000);
   };
   return (
     <div className="ib-copy">
-      <span className="ib-label">{label}</span>
+      <label className="ib-label" htmlFor={id}>
+        {label}
+      </label>
       <div className="ib-copy-row">
-        <input
-          ref={inputRef}
-          readOnly
-          value={value}
-          className="is-mono"
-          onFocus={(e) => e.target.select()}
-          aria-label={label}
-        />
-        <button type="button" className="ib-icon-btn" onClick={copy} aria-label={`Copy ${label}`}>
-          {copied ? <Check size={16} /> : <Copy size={16} />}
+        <input id={id} ref={inputRef} readOnly value={value} className="is-mono" onFocus={(e) => e.target.select()} />
+        <button
+          type="button"
+          className={'ib-copy-btn' + (state === 'copied' ? ' is-done' : '')}
+          onClick={copy}
+          aria-label={`Copy ${label}`}
+        >
+          {state === 'copied' ? <Check size={15} /> : <Copy size={15} />}
+          {state === 'copied' ? 'Copied' : state === 'failed' ? 'Press Ctrl+C' : 'Copy'}
         </button>
       </div>
+    </div>
+  );
+}
+
+/** Copies several labelled values at once, or saves them as a text file. */
+export function CopyAll({ items, filename = 'application-details.txt' }) {
+  const [state, setState] = useState('idle');
+  const text = items.map(([label, value]) => `${label}: ${value}`).join('\n');
+  const copy = async () => {
+    setState((await copyText(text)) ? 'copied' : 'failed');
+    setTimeout(() => setState('idle'), 2000);
+  };
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([text + '\n'], { type: 'text/plain' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  return (
+    <div className="ib-actions">
+      <button type="button" className="btn btn-ghost ib-btn" onClick={copy}>
+        {state === 'copied' ? <Check size={15} /> : <Copy size={15} />}
+        {state === 'copied' ? 'Copied both' : state === 'failed' ? 'Select and copy manually' : 'Copy both'}
+      </button>
+      <button type="button" className="btn btn-ghost ib-btn" onClick={download}>
+        <Download size={15} /> Save as .txt
+      </button>
     </div>
   );
 }
@@ -188,6 +233,7 @@ export function Field({ field, data, onChange, error }) {
   const [key, label, type, required, options] = field;
   const fieldId = useId();
   const [fileError, setFileError] = useState('');
+  const [preparing, setPreparing] = useState(false);
   const isDocument = type === 'documents';
   const multiple = type === 'files' || isDocument;
 
@@ -201,28 +247,28 @@ export function Field({ field, data, onChange, error }) {
       return;
     }
     const allowed = ['image/png', 'image/jpeg', 'image/webp', ...(isDocument ? ['application/pdf'] : [])];
-    if (files.some((f) => !allowed.includes(f.type) || f.size > 2 * 1024 * 1024)) {
+    // Photos are shrunk in the browser before upload, so originals up to 12 MB
+    // are fine; PDFs can't be shrunk and keep the 2 MB limit.
+    const tooBig = (f) => f.size > (f.type === 'application/pdf' ? 2 : 12) * 1024 * 1024;
+    if (files.some((f) => !allowed.includes(f.type) || tooBig(f))) {
       setFileError(
         isDocument
-          ? 'Use PDF, PNG, JPEG or WebP files, each under 2 MB.'
-          : 'Use a PNG, JPEG or WebP image under 2 MB.'
+          ? 'Use PDF, PNG, JPEG or WebP files (PDFs under 2 MB, images under 12 MB).'
+          : 'Use a PNG, JPEG or WebP image under 12 MB.'
       );
       return;
     }
+    setPreparing(true);
     const values = await Promise.all(
-      files.map(
-        (f) =>
-          new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve({ name: f.name, data: reader.result });
-            reader.onerror = () => reject(new Error('File could not be read.'));
-            reader.readAsDataURL(f);
-          })
+      files.map((f) =>
+        f.type === 'application/pdf' ? readFile(f) : prepareImage(f, { maxDim: type === 'file' ? 800 : 1600 })
       )
-    ).catch((err) => {
-      setFileError(err.message);
-      return null;
-    });
+    )
+      .catch((err) => {
+        setFileError(err.message);
+        return null;
+      })
+      .finally(() => setPreparing(false));
     if (values) onChange(key, type === 'file' ? values[0] : values);
   };
 
@@ -345,9 +391,17 @@ export function Field({ field, data, onChange, error }) {
         <>
           <div className={'ib-drop' + (error || fileError ? ' is-invalid' : '')}>
             <Upload size={20} strokeWidth={1.7} aria-hidden="true" />
-            <strong>{isDocument ? 'Choose supporting documents' : data[key] ? 'Replace logo' : 'Choose your startup logo'}</strong>
+            <strong>
+              {preparing
+                ? 'Preparing image…'
+                : isDocument
+                  ? 'Choose supporting documents'
+                  : data[key]
+                    ? 'Replace logo'
+                    : 'Choose your startup logo'}
+            </strong>
             <small>
-              {isDocument ? 'PDF, PNG, JPG or WebP · up to 2 MB each · max 3 files' : 'PNG, JPG or WebP · up to 2 MB'}
+              {isDocument ? 'PDF, PNG, JPG or WebP · max 3 files' : 'PNG, JPG or WebP · large photos are shrunk automatically'}
             </small>
             <input
               id={fieldId}

@@ -111,6 +111,32 @@ export class Database {
       [id, JSON.stringify(clean), createdAt || null],
     );
   }
+  /* Write several rows in ONE round trip. Each put() is a separate network
+     request to the (remote) database; a startup application writes 4+ rows,
+     and that latency, not the work itself, is what made submitting slow.
+     Data-modifying CTEs all run even though nothing selects from them. */
+  async putMany(rows) {
+    if (!rows.length) return;
+    const values = [];
+    const ctes = rows.map(([table, id, data], i) => {
+      const clean = { ...data };
+      delete clean.id;
+      values.push(id, JSON.stringify(clean));
+      const p = values.length;
+      return (
+        "w" +
+        i +
+        " AS (INSERT INTO " +
+        tableName(table) +
+        " (id,data,created_at) VALUES ($" +
+        (p - 1) +
+        ",$" +
+        p +
+        "::jsonb,now()) ON CONFLICT(id) DO UPDATE SET data=excluded.data)"
+      );
+    });
+    await this.query("WITH " + ctes.join(",") + " SELECT 1", values);
+  }
   async remove(table, id) {
     await this.query("DELETE FROM " + tableName(table) + " WHERE id=$1", [id]);
   }
@@ -120,8 +146,11 @@ export class Database {
     const tx = Object.create(this);
     tx.query = (text, values = []) => client.query(text, values);
     try {
-      await client.query("BEGIN");
-      await client.query("SELECT set_config('expo.actor',$1,true)", [actor]);
+      // One round trip, not two. The actor is escaped as a literal because a
+      // multi-statement simple query cannot take bound parameters.
+      await client.query(
+        "BEGIN; SELECT set_config('expo.actor'," + client.escapeLiteral(String(actor)) + ",true)",
+      );
       const result = await work(tx);
       await client.query("COMMIT");
       return result;

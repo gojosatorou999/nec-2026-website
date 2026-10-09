@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, CircleCheck, ShieldCheck } 
 import { fieldVisible, steps, validateApplication } from '../../shared/schema.js';
 import { api } from './api.js';
 import { scrollToY } from '../smoothScroll.js';
-import { Button, CopyField, ErrorBox, Field, Heading } from './ui.jsx';
+import { Button, CopyAll, CopyField, ErrorBox, Field, Heading } from './ui.jsx';
 
 function TeamReview({ members = [] }) {
   return members.map((member, index) => (
@@ -102,6 +102,13 @@ export default function Registration() {
         <div className="ib-codes">
           <CopyField label="Application reference" value={result.id} />
           <CopyField label="Private access code" value={result.token} />
+          <CopyAll
+            items={[
+              ['Application reference', result.id],
+              ['Private access code', result.token],
+            ]}
+            filename={`${result.id}.txt`}
+          />
         </div>
         <p className="ib-note">
           <ShieldCheck size={16} /> Save both now — they are the only way to check your status and read private
