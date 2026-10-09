@@ -1,4 +1,4 @@
-import { useState, useCallback, Suspense } from 'react';
+import { useState, useCallback, useEffect, Suspense } from 'react';
 import SequenceLoader from './components/SequenceLoader';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
@@ -20,6 +20,18 @@ function Site() {
   useAnchorScroll();
   const handleComplete = useCallback(() => setReady(true), []);
 
+  // The site mounts underneath the intro instead of after it, so the hero's
+  // 3D scene downloads, builds and compiles while the intro film plays and is
+  // already there when it fades. Scrolling stays locked until then.
+  useEffect(() => {
+    if (ready) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [ready]);
+
   return (
     <>
       {/* Scroll-driven water caustics, behind everything, click-through */}
@@ -31,12 +43,15 @@ function Site() {
         </Suspense>
       )}
 
-      {ready && (
-        <div style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}>
+      <div
+        style={{ position: 'relative', zIndex: 1, minHeight: '100vh' }}
+        aria-hidden={!ready || undefined}
+        inert={!ready || undefined}
+      >
           <Navbar />
 
           <main>
-            <HeroSection />
+            <HeroSection introDone={ready} />
             <AboutSection />
             <DelegationSection />
             <MentorsSection />
@@ -45,8 +60,7 @@ function Site() {
           </main>
 
           <Footer />
-        </div>
-      )}
+      </div>
     </>
   );
 }

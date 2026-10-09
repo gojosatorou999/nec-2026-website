@@ -51,7 +51,21 @@ function shardSeparation(p, stagger) {
   return smoothstep(0.05 + s * 0.35, 0.45 + s * 0.35, p);
 }
 
-export default function IdeaLogoScene({ progressRef }) {
+export default function IdeaLogoScene({ progressRef, active = true }) {
+  // While the intro loader plays the scene is built and warmed (one frame
+  // rendered, every shader compiled) but holds still, so it can't make the
+  // intro film stutter. When the intro ends it is already on screen.
+  const activeRef = useRef(active);
+  const resumeRef = useRef(null);
+  const holdRef = useRef(null);
+  useEffect(() => {
+    activeRef.current = active;
+    if (active) {
+      holdRef.current?.();
+      resumeRef.current?.();
+    }
+  }, [active]);
+
   const hostRef = useRef(null);
 
   useEffect(() => {
@@ -78,12 +92,15 @@ export default function IdeaLogoScene({ progressRef }) {
       antialias: false,
       powerPreference: 'high-performance',
     });
-    // Bloom + MSAA at full phone density (DPR 3) cost more GPU than the rest
-    // of the page combined and fought the scroll for frames. Shards are soft-
-    // lit glass under bloom — 1.25–1.5x is visually indistinguishable.
+    // Capped below a phone's full DPR 3 — bloom + MSAA at that density cost
+    // more GPU than the rest of the page combined — but never below native 1x.
     const coarse = window.matchMedia('(pointer: coarse)').matches;
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.25 : 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.5 : 2));
+    // Hidden until the first fully compiled frame is drawn, then faded in —
+    // no half-built frame, no pop.
+    renderer.domElement.style.opacity = '0';
+    renderer.domElement.style.transition = 'opacity 0.9s ease';
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -92,16 +109,17 @@ export default function IdeaLogoScene({ progressRef }) {
     renderer.domElement.style.display = 'block';
     host.appendChild(renderer.domElement);
 
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.15).texture;
-    pmrem.dispose();
+    // The reflection environment is built in the async start-up chain below,
+    // after its shaders are compiled in the background — built synchronously
+    // here it blocked the page for ~0.8s on Windows (ANGLE) and froze the intro.
+    const room = new RoomEnvironment();
 
     /* ── Post: MSAA target keeps shard edges clean under bloom ── */
     const renderTarget = new THREE.WebGLRenderTarget(width, height, {
       type: THREE.HalfFloatType,
       format: THREE.RGBAFormat,
       colorSpace: THREE.SRGBColorSpace,
-      samples: 2,
+      samples: coarse ? 2 : 4,
     });
     const composer = new EffectComposer(renderer, renderTarget);
     composer.addPass(new RenderPass(scene, camera));
@@ -129,8 +147,13 @@ export default function IdeaLogoScene({ progressRef }) {
         uniform float uGrain;
         varying vec2 vUv;
 
+        // Sine-free hash (Dave Hoskins). The classic fract(sin(dot(...))) hash
+        // loses precision at pixel-sized inputs and paints faint diagonal
+        // stripes across the frame — the "grid" visible on the shards.
         float hash(vec2 p) {
-          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+          vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+          p3 += dot(p3, p3.yzx + 33.33);
+          return fract((p3.x + p3.y) * p3.z);
         }
 
         void main() {
@@ -147,7 +170,9 @@ export default function IdeaLogoScene({ progressRef }) {
           float vig = smoothstep(0.95, 0.35, dist);
           color *= mix(0.7, 1.0, vig);
 
-          color += (hash(vUv * vec2(1920.0, 1080.0) + fract(uTime) * 61.7) - 0.5) * uGrain;
+          // Grain per physical pixel. Hashing UVs at a fixed 1920x1080 aliased
+          // into a visible grid whenever the buffer wasn't exactly that size.
+          color += (hash(gl_FragCoord.xy + floor(fract(uTime) * 24.0) * vec2(37.0, 17.0)) - 0.5) * uGrain;
           gl_FragColor = vec4(color, 1.0);
         }`,
     });
@@ -412,8 +437,10 @@ export default function IdeaLogoScene({ progressRef }) {
     // this loop rendered bloom every frame for the whole visit — including
     // while reading the bottom of the page, where it was the main scroll cost.
     let visible = true;
+    let warmed = false;
+    let compiled = false; // the loop must not start before compileAsync settles
     const resume = () => {
-      if (frameId || !visible || document.hidden) return;
+      if (!compiled || frameId || !visible || document.hidden || (warmed && !activeRef.current)) return;
       clock.getDelta(); // drop the paused gap so nothing jumps
       frameId = requestAnimationFrame(animate);
     };
@@ -426,7 +453,7 @@ export default function IdeaLogoScene({ progressRef }) {
     document.addEventListener('visibilitychange', onVisibility);
 
     const animate = () => {
-      if (!visible || document.hidden) {
+      if (!visible || document.hidden || (warmed && !activeRef.current)) {
         frameId = 0;
         return;
       }
@@ -434,13 +461,14 @@ export default function IdeaLogoScene({ progressRef }) {
       const rawDt = clock.getDelta();
       const dt = Math.min(rawDt, 0.05);
 
-      // Adaptive resolution: on a GPU that can't hold ~45fps, render the mark
-      // at a lower pixel ratio (the browser upscales it; under bloom the
-      // difference is invisible). Fast machines never trip this.
-      if (rawDt < 0.2) {
+      // Adaptive resolution: on a GPU that can't hold ~45fps, step a high-DPI
+      // render down toward native 1x — never below it, where upscaling turned
+      // the grain into a visible grid. The first two seconds (shader compile,
+      // page load) are ignored so startup hitches don't count as a slow GPU.
+      if (rawDt < 0.2 && clock.elapsedTime > 2) {
         slowAvg += (rawDt - slowAvg) * 0.05;
-        if (++slowFrames > 45 && slowAvg > 1 / 45 && pixelRatio > 0.55) {
-          pixelRatio = Math.max(0.55, pixelRatio * 0.8);
+        if (++slowFrames > 45 && slowAvg > 1 / 45 && pixelRatio > 1) {
+          pixelRatio = Math.max(1, pixelRatio * 0.85);
           renderer.setPixelRatio(pixelRatio);
           composer.setPixelRatio(pixelRatio);
           handleResize();
@@ -492,16 +520,114 @@ export default function IdeaLogoScene({ progressRef }) {
       finishPass.uniforms.uTime.value = t;
 
       composer.render();
+      if (!warmed) {
+        warmed = true;
+        requestAnimationFrame(() => {
+          renderer.domElement.style.opacity = '1';
+        });
+      }
     };
-    animate();
+    resumeRef.current = resume;
+
+    // Compile every scene shader without blocking (KHR_parallel_shader_compile
+    // where available) before the first frame, so the reveal is a finished
+    // image rather than a stall.
+    // The post-processing passes draw full-screen quads whose shaders would
+    // otherwise compile synchronously on the first frame (~0.45s). Put each
+    // pass material on a quad in a throwaway scene so it can be compiled in
+    // the background with everything else.
+    const warmScene = new THREE.Scene();
+    const warmGeo = new THREE.PlaneGeometry(2, 2);
+    [
+      finishPass.material,
+      bloomPass.materialHighPassFilter,
+      ...bloomPass.separableBlurMaterials,
+      bloomPass.compositeMaterial,
+      bloomPass.blendMaterial,
+    ]
+      .filter(Boolean)
+      .forEach((m) => warmScene.add(new THREE.Mesh(warmGeo, m)));
+    const warmCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    let disposed = false;
+    const settle = (promise) => promise.catch(() => {});
+
+    // Shader variants depend on where they draw: into a render target there is
+    // no tone mapping and linear output, unlike the canvas. Compile each set
+    // under the state it will actually be rendered with, or the cached
+    // programs miss and everything recompiles synchronously on first use.
+    const offscreen = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+    const compileInto = (target, sceneToCompile, cam, toneMapping = renderer.toneMapping) => {
+      const prevTarget = renderer.getRenderTarget();
+      const prevTone = renderer.toneMapping;
+      renderer.setRenderTarget(target);
+      renderer.toneMapping = toneMapping;
+      const job = renderer.compileAsync(sceneToCompile, cam);
+      renderer.setRenderTarget(prevTarget);
+      renderer.toneMapping = prevTone;
+      return settle(job);
+    };
+
+    // The scene's shaders depend on the environment map's layout, not its
+    // contents. A stand-in with the same cube-UV dimensions as the real one
+    // (PMREM at ENV_SIZE → 3·size × 4·size) lets every scene shader compile in
+    // the background now; the real map then drops in with no recompile.
+    const ENV_SIZE = 128;
+    const envStandIn = new THREE.Texture();
+    envStandIn.mapping = THREE.CubeUVReflectionMapping;
+    envStandIn.image = { width: 3 * Math.max(ENV_SIZE, 16 * 7), height: 4 * ENV_SIZE };
+    scene.environment = envStandIn;
+
+    // Everything below that can run off the main thread does, immediately.
+    const background = Promise.all([
+      // PMREM renders the room into a half-float target with tone mapping off.
+      compileInto(offscreen, room, camera, THREE.NoToneMapping),
+      // RenderPass draws the scene into the composer's target…
+      compileInto(composer.renderTarget1, scene, camera),
+      // …intermediate passes draw into targets, the last one to the canvas.
+      compileInto(composer.renderTarget1, warmScene, warmCam),
+      compileInto(null, warmScene, warmCam),
+    ]);
+
+    // One step can't be made asynchronous: three.js compiles the PMREM blur
+    // shader synchronously (~0.7s on Windows/ANGLE). Run it while the intro
+    // holds its final still frame — a stall there is invisible — or at once if
+    // the intro has already finished.
+    const introHeld = new Promise((resolve) => {
+      if (activeRef.current || window.__introHeld) return resolve();
+      const done = () => {
+        window.removeEventListener('intro:held', done);
+        resolve();
+      };
+      window.addEventListener('intro:held', done);
+      holdRef.current = done;
+    });
+
+    Promise.all([background, introHeld]).then(() => {
+      warmGeo.dispose();
+      offscreen.dispose();
+      if (disposed) return;
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(room, 0.15, 0.1, 100, { size: ENV_SIZE }).texture;
+      pmrem.dispose();
+      room.dispose?.();
+      compiled = true;
+      clock.getDelta();
+      animate();
+    });
 
     return () => {
+      disposed = true;
+      resumeRef.current = null;
+      if (holdRef.current) window.removeEventListener('intro:held', holdRef.current);
+      holdRef.current = null;
       cancelAnimationFrame(frameId);
       frameId = -1; // block resume() after teardown
       io.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       resizeObserver.disconnect();
       composer.dispose();
+      scene.environment?.dispose();
       renderer.dispose();
       renderTarget.dispose();
       starGeo.dispose();

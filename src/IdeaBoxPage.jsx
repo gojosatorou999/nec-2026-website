@@ -113,9 +113,11 @@ const PROCESS = [
 ];
 
 function Overview({ startups, loading, openChallenges }) {
+  const listed = startups.filter((x) => x.status === 'Approved' && !x.isDemo).length;
   return (
     <>
       <section className="ib-hero" aria-labelledby="ib-hero-title">
+        <div className="ib-hero-copy">
         <span className="chip">
           <span className="ib-dot is-mint" aria-hidden="true" /> Idea Incubator · MGIT
         </span>
@@ -142,6 +144,63 @@ function Overview({ startups, loading, openChallenges }) {
             <MapPin size={15} aria-hidden="true" /> MGIT, Hyderabad
           </li>
         </ul>
+        </div>
+
+        <aside className="ib-card ib-glance" aria-label="At a glance">
+          <p className="eyebrow">At a glance</p>
+          <dl>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <Store size={16} strokeWidth={1.8} />
+                </span>
+                Startup applications
+              </dt>
+              <dd>
+                <span className="ib-live" aria-hidden="true" /> Open
+              </dd>
+            </div>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <ClipboardCheck size={16} strokeWidth={1.8} />
+                </span>
+                Startups in the showcase
+              </dt>
+              <dd>{loading ? '—' : listed || 'Opens soon'}</dd>
+            </div>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <Zap size={16} strokeWidth={1.8} />
+                </span>
+                Rapid-fire challenges
+              </dt>
+              <dd>{openChallenges === null ? '—' : openChallenges ? `${openChallenges} open` : 'Opens soon'}</dd>
+            </div>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <CalendarDays size={16} strokeWidth={1.8} />
+                </span>
+                Expo date
+              </dt>
+              <dd>To be announced</dd>
+            </div>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <MapPin size={16} strokeWidth={1.8} />
+                </span>
+                Venue
+              </dt>
+              <dd>MGIT, Hyderabad</dd>
+            </div>
+          </dl>
+          <a href="#status" className="ib-glance-link">
+            Already applied? Track your application <ArrowRight size={15} />
+          </a>
+        </aside>
       </section>
 
       <section className="ib-section" aria-labelledby="ways-title">

@@ -133,6 +133,10 @@ export default function SequenceLoader({ onComplete }) {
       setProgress(Math.round((frame / (FRAME_COUNT - 1)) * 100));
 
       if (frame >= FRAME_COUNT - 1) {
+        // The film is now a still frame: tell the hero it can do the one piece
+        // of 3D setup that briefly blocks the page (see IdeaLogoScene).
+        window.__introHeld = true;
+        window.dispatchEvent(new Event('intro:held'));
         // hold on the resolved lockup for a beat before handing over
         setTimeout(finish, 620);
         return;

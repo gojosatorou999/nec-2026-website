@@ -53,7 +53,9 @@ export const steps = [
       ["email", "Email ID", "email", true],
       ["organization", "College/organization", "text", true],
       ["phone", "Contact number (WhatsApp preferred)", "tel", true],
-      ["collegeEmail", "College email", "email", true],
+      // Stored under the original key so existing applications, exports and
+      // the privacy filter keep working; only the label changed.
+      ["collegeEmail", "Company email", "email", true],
       ["teamSize", "Team size", "text", true],
       ["members", "Additional team members", "members"],
     ],

@@ -179,7 +179,7 @@ export default function Registration() {
               </section>
             ))}
             <p className="ib-note">
-              <ShieldCheck size={16} /> Contact details, college emails and stall requirements stay private. If
+              <ShieldCheck size={16} /> Contact details, company emails and stall requirements stay private. If
               accepted, the showcase shows your logo, one-line idea, team names, college and what you’ll display.
             </p>
           </div>

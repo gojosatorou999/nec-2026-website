@@ -37,7 +37,7 @@ function shardSeparation(p) {
   return smoothstep(0.05, 0.8, p);
 }
 
-export default function HeroSection() {
+export default function HeroSection({ introDone = true }) {
   const progressRef = useRef(0);
   const wrapperRef = useRef(null);
   const headlineRef = useRef(null);
@@ -119,7 +119,7 @@ export default function HeroSection() {
         {/* ── 3D mark ── */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <Suspense fallback={null}>
-            <IdeaLogoScene progressRef={progressRef} />
+            <IdeaLogoScene progressRef={progressRef} active={introDone} />
           </Suspense>
         </div>
 
