@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { BrandLockup, IconArrow } from './components/BrandLogo';
 import WaterLayer from './components/WaterLayer';
 import POSTS_FROM_FILE from './data/blogs.json';
@@ -6,6 +6,8 @@ import POSTS_FROM_FILE from './data/blogs.json';
 /* ═══════════════════════════════════════════════════════════════════════════
    BLOG PAGE — public read-only
    Posts are maintained in src/data/blogs.json and pushed to Git.
+   Each post has a `slug` field that drives shareable URLs:
+     /blog?post=<slug>   → opens that post directly
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function formatDate(iso) {
@@ -27,6 +29,70 @@ function EmptyState() {
   );
 }
 
+/* ─── Share button ────────────────────────────────────────────────────────── */
+function ShareButton({ slug, title }) {
+  const [copied, setCopied] = useState(false);
+
+  const getShareUrl = () => {
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?post=${slug}`;
+  };
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const url = getShareUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      aria-label={`Copy link to "${title}"`}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        background: copied ? 'rgba(100,220,140,0.12)' : 'rgba(255,255,255,0.06)',
+        border: `1px solid ${copied ? 'rgba(100,220,140,0.35)' : 'rgba(255,255,255,0.12)'}`,
+        borderRadius: 'var(--r-pill)', padding: '6px 14px',
+        color: copied ? '#7effa7' : 'var(--text-2)',
+        fontSize: '0.75rem', fontFamily: 'var(--font-mono)',
+        letterSpacing: '0.04em', cursor: 'pointer',
+        transition: 'all 0.25s ease', flexShrink: 0,
+      }}
+    >
+      {copied ? (
+        <>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+          Copied!
+        </>
+      ) : (
+        <>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+          Copy link
+        </>
+      )}
+    </button>
+  );
+}
+
 /* ─── Blog Card ───────────────────────────────────────────────────────────── */
 function BlogCard({ post, onClick }) {
   return (
@@ -35,7 +101,14 @@ function BlogCard({ post, onClick }) {
       onClick={() => onClick(post)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick(post)}
+      onKeyDown={(e) => {
+        // Only when the card itself has focus — Enter on the Copy link button
+        // inside it must copy, not also open the post.
+        if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick(post);
+        }
+      }}
       aria-label={`Read: ${post.title}`}
     >
       {post.coverUrl && (
@@ -56,18 +129,77 @@ function BlogCard({ post, onClick }) {
           <span className="eyebrow" style={{ color: 'var(--text-3)' }}>·</span>
           <span className="eyebrow">{formatDate(post.createdAt)}</span>
         </div>
-        <span className="btn btn-ghost blog-card-cta" style={{ marginTop: 18, padding: '9px 20px', fontSize: '0.82rem' }}>
-          Read more <IconArrow />
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+          <span className="btn btn-ghost blog-card-cta" style={{ padding: '9px 20px', fontSize: '0.82rem' }}>
+            Read more <IconArrow />
+          </span>
+          {post.slug && (
+            <ShareButton slug={post.slug} title={post.title} />
+          )}
+        </div>
       </div>
     </article>
   );
 }
 
+/* ─── Render content with ## headings, # headings, and images ──────────────── */
+function renderContent(content) {
+  return content.split('\n').map((para, i) => {
+    const trimmed = para.trim();
+    if (!trimmed) return <br key={i} />;
+
+    if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) {
+      return <h1 key={i} className="post-modal-heading1">{trimmed.slice(2)}</h1>;
+    }
+    if (trimmed.startsWith('## ')) {
+      return <h2 key={i} className="post-modal-subheading">{trimmed.slice(3)}</h2>;
+    }
+    const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imgMatch) {
+      return (
+        <figure key={i} className="post-modal-figure">
+          <img src={imgMatch[2]} alt={imgMatch[1]} loading="lazy" />
+          {imgMatch[1] && <figcaption>{imgMatch[1]}</figcaption>}
+        </figure>
+      );
+    }
+    return <p key={i}>{trimmed}</p>;
+  });
+}
+
 /* ─── Full Post Modal ─────────────────────────────────────────────────────── */
 function PostModal({ post, onClose }) {
-  // Close on Escape key
-  const handleKey = (e) => e.key === 'Escape' && onClose();
+  // Update URL when modal opens
+  useEffect(() => {
+    if (post.slug) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('post', post.slug);
+      window.history.replaceState({}, '', url.toString());
+    }
+    return () => {
+      // Remove ?post= param when modal closes
+      const url = new URL(window.location.href);
+      url.searchParams.delete('post');
+      window.history.replaceState({}, '', url.toString());
+    };
+  }, [post]);
+
+  // Escape closes the post, the page behind stops scrolling while it is open,
+  // and focus returns to the card that opened it.
+  const closeRef = useRef(null);
+  useEffect(() => {
+    const opener = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closeRef.current?.focus();
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+      opener?.focus?.();
+    };
+  }, [onClose]);
   return (
     <>
       {/* Full-screen scrim */}
@@ -75,25 +207,27 @@ function PostModal({ post, onClose }) {
         className="post-modal-overlay"
         onClick={onClose}
         role="presentation"
-        onKeyDown={handleKey}
       />
 
       {/* Centered card */}
       <div className="post-modal" role="dialog" aria-modal="true" aria-labelledby="post-modal-title">
         {/* Sticky header bar inside card */}
         <div className="post-modal-header">
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', flex: 1 }}>
             {post.tags?.map((tag) => <span key={tag} className="chip" style={{ fontSize: '0.6rem' }}>{tag}</span>)}
           </div>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close post">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {post.slug && <ShareButton slug={post.slug} title={post.title} />}
+            <button ref={closeRef} className="modal-close-btn" onClick={onClose} aria-label="Close post">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Scrollable body */}
-        <div className="post-modal-body">
+        <div className="post-modal-body" data-lenis-prevent>
           {post.coverUrl && (
             <div className="post-modal-cover-wrap">
               <img src={post.coverUrl} alt={`Cover for ${post.title}`} className="post-modal-cover" />
@@ -109,23 +243,7 @@ function PostModal({ post, onClose }) {
             </div>
             <div className="hairline" style={{ margin: '24px 0' }} />
             <div className="post-modal-content">
-              {post.content.split('\n').map((para, i) => {
-                const trimmed = para.trim();
-                if (!trimmed) return <br key={i} />;
-                if (trimmed.startsWith('## ')) {
-                  return <h2 key={i} className="post-modal-subheading">{trimmed.slice(3)}</h2>;
-                }
-                const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-                if (imgMatch) {
-                  return (
-                    <figure key={i} className="post-modal-figure">
-                      <img src={imgMatch[2]} alt={imgMatch[1]} loading="lazy" />
-                      {imgMatch[1] && <figcaption>{imgMatch[1]}</figcaption>}
-                    </figure>
-                  );
-                }
-                return <p key={i}>{trimmed}</p>;
-              })}
+              {renderContent(post.content)}
             </div>
           </div>
         </div>
@@ -141,6 +259,18 @@ export default function BlogPage() {
   const posts = [...POSTS_FROM_FILE].reverse(); // newest first
   const [activePost, setActivePost] = useState(null);
   const [search, setSearch] = useState('');
+  const closePost = useCallback(() => setActivePost(null), []);
+
+  // On mount, check if ?post=<slug> is in URL and open that post
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('post');
+    if (slug) {
+      const found = posts.find((p) => p.slug === slug);
+      if (found) setActivePost(found);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filtered = posts.filter((p) => {
     const q = search.toLowerCase();
@@ -242,7 +372,7 @@ export default function BlogPage() {
       </div>
 
       {activePost && (
-        <PostModal post={activePost} onClose={() => setActivePost(null)} />
+        <PostModal post={activePost} onClose={closePost} />
       )}
 
       <style>{`
@@ -356,6 +486,15 @@ export default function BlogPage() {
         .post-modal-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .post-modal-content { font-size: 1.1rem; line-height: 1.9; color: var(--text-2); }
         .post-modal-content p { margin-bottom: 1.2em; }
+        .post-modal-heading1 {
+          font-family: var(--font-display);
+          font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+          font-weight: 700; letter-spacing: -0.03em; line-height: 1.2;
+          color: var(--text); margin: 2.2em 0 0.6em;
+          background: linear-gradient(90deg, var(--peri), #a78bfa);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
         .post-modal-subheading {
           font-family: var(--font-display);
           font-size: clamp(1.1rem, 2.2vw, 1.4rem);
