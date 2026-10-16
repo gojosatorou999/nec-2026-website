@@ -12,7 +12,8 @@
     "test": "node --env-file-if-exists=.env.test --test tests/*.test.js",
     "test:unit": "node --test tests/client-api.test.js tests/public-startup.test.js tests/public-idea.test.js tests/submissions.test.js tests/database-config.test.js tests/database-writes.test.js",
     "db:setup": "node scripts/setup-database.mjs",
-    "db:check": "node scripts/check-database.mjs"
+    "db:check": "node scripts/check-database.mjs",
+    "ideas:review": "node scripts/review-ideas.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

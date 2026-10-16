@@ -411,6 +411,7 @@ app.post("/api/ideas", async (req, res) => {
     });
   // Publishing is an organizer decision: a visitor can never self-publish.
   delete d.showcase;
+  delete d.showcaseConsentRecord;
   if (d.mode === "rapid") delete d.showcaseConsent;
   else {
     d.title = typeof d.title === "string" ? d.title.trim() : "";
@@ -573,7 +574,7 @@ app.post("/api/admin/problems", auth, async (req, res) => {
   res.status(201).json({ id });
 });
 app.patch("/api/admin/ideas/:id", auth, async (req, res) => {
-  const { published, title, brief, category } = req.body;
+  const { published, title, brief, category, consentConfirmed } = req.body;
   const heading = typeof title === "string" ? title.trim() : "";
   const summary = typeof brief === "string" ? brief.trim() : "";
   if (
@@ -584,7 +585,7 @@ app.patch("/api/admin/ideas/:id", auth, async (req, res) => {
     return res.status(400).json({
       error: `Choose publish or remove, with a title under ${IDEA_TITLE_MAX} and a brief under ${IDEA_BRIEF_MAX} characters.`,
     });
-  const showcase = await db.transaction(async (tx) => {
+  const saved = await db.transaction(async (tx) => {
     const idea = await tx.get("idea_submissions", req.params.id, {
       lock: true,
     });
@@ -593,9 +594,20 @@ app.patch("/api/admin/ideas/:id", auth, async (req, res) => {
       e.status = 404;
       throw e;
     }
-    if (published && idea.showcaseConsent !== true) {
+    // Ideas submitted before the form asked for permission can be featured
+    // once the student has agreed in writing; the organizer records that here.
+    const consentRecord =
+      idea.showcaseConsent !== true && consentConfirmed === true
+        ? {
+            source: "organizer-confirmed",
+            by: req.user.email,
+            at: new Date().toISOString(),
+          }
+        : idea.showcaseConsentRecord;
+    const consent = idea.showcaseConsent === true || consentConfirmed === true;
+    if (published && !consent) {
       const e = new Error(
-        "This student did not agree to a public listing. Ask them to resubmit with permission.",
+        "This student has not agreed to a public listing. Ask for their permission first.",
       );
       e.status = 409;
       throw e;
@@ -611,11 +623,18 @@ app.patch("/api/admin/ideas/:id", auth, async (req, res) => {
     await tx.put("idea_submissions", idea.id, {
       ...idea,
       ...(categories.includes(category) ? { category } : {}),
+      showcaseConsent: consent,
+      ...(consentRecord ? { showcaseConsentRecord: consentRecord } : {}),
       showcase: next,
     });
-    return next;
+    return {
+      showcase: next,
+      showcaseConsent: consent,
+      showcaseConsentRecord: consentRecord,
+      category: categories.includes(category) ? category : idea.category,
+    };
   }, req.user.id);
-  res.json({ ok: true, showcase });
+  res.json({ ok: true, ...saved });
 });
 app.patch("/api/admin/problems/:id", auth, async (req, res) => {
   const p = await db.get("problem_statements", req.params.id);

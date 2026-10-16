@@ -8,6 +8,7 @@ import {
   Layers,
   LogOut,
   MapPin,
+  Mail,
   MessageSquare,
   Plus,
   RefreshCw,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 import { categories, stages } from '../../shared/schema.js';
 import { fieldLabel, isUpload, submissionSections } from '../../shared/submissions.js';
-import { IDEA_BRIEF_MAX, IDEA_TITLE_MAX, ideaBrief, ideaTitle, isPublished } from '../../shared/ideas.js';
+import { IDEA_BRIEF_MAX, IDEA_TITLE_MAX, isPublished, permissionRequest, reviewIdea } from '../../shared/ideas.js';
 import { api } from './api.js';
 import { Button, EmptyState, ErrorBox, Loading, Modal, Tag, TextField } from './ui.jsx';
 import { formatDate, statusTone } from './format.js';
@@ -113,25 +114,31 @@ function SubmissionDetails({ record }) {
 }
 
 /* Publishing an idea is the organizers' call, and only with the student's
-   consent. What goes public is exactly what the preview below shows. */
-function IdeaPublish({ record, onSaved }) {
-  const [title, setTitle] = useState(ideaTitle(record));
-  const [brief, setBrief] = useState(ideaBrief(record));
-  const [category, setCategory] = useState(record.category || '');
+   permission. The form shows a draft made from the submission; what goes
+   public is exactly the title, brief, category and owner details shown here. */
+function IdeaPublish({ record, allIdeas, onSaved }) {
+  const review = reviewIdea(record, allIdeas);
+  const [title, setTitle] = useState(review.draft.title);
+  const [brief, setBrief] = useState(review.draft.brief);
+  const [category, setCategory] = useState(review.draft.category);
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const live = isPublished(record);
   const consent = record.showcaseConsent === true;
+  const canPublish = consent || agreed;
+  const mail = permissionRequest(record, { title, brief, category });
 
   async function save(published) {
     setBusy(true);
     setError('');
     try {
-      const { showcase } = await api('/admin/ideas/' + record.id, {
+      const saved = await api('/admin/ideas/' + record.id, {
         method: 'PATCH',
-        body: { published, title, brief, category },
+        body: { published, title, brief, category, consentConfirmed: !consent && agreed },
       });
-      onSaved({ ...record, category, showcase });
+      const { ok: _ok, ...changes } = saved;
+      onSaved({ ...record, ...changes });
     } catch (e) {
       setError(e.message);
     } finally {
@@ -141,60 +148,98 @@ function IdeaPublish({ record, onSaved }) {
 
   return (
     <section className="ib-card ib-panel ib-publish">
-      <h3 className="ib-subtitle">{live ? 'Live in the showcase' : 'Showcase'}</h3>
-      {!consent ? (
-        <p className="ib-lede">
-          This student did not agree to a public listing, so it cannot be published. Ask them to resubmit with
-          permission.
-        </p>
-      ) : (
-        <>
-          <p className="ib-lede">
-            Visitors see the title, brief, category, {record.name}’s name, class and email ({record.email}). The full
-            idea stays here.
-          </p>
-          <div className="ib-form-grid is-single">
-            <TextField
-              label="Title"
-              name="title"
-              value={title}
-              maxLength={IDEA_TITLE_MAX}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <TextField
-              label="Brief"
-              name="brief"
-              type="textarea"
-              rows={2}
-              value={brief}
-              maxLength={IDEA_BRIEF_MAX}
-              onChange={(e) => setBrief(e.target.value)}
-            />
-            <div className="ib-field">
-              <label className="ib-label" htmlFor="idea-pub-category">
-                Category <small>optional</small>
-              </label>
-              <select id="idea-pub-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">No category</option>
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <ErrorBox message={error} />
-          <div className="ib-actions">
-            <Button primary disabled={busy || !title.trim() || !brief.trim()} onClick={() => save(true)}>
-              {live ? 'Save changes' : 'Publish to showcase'}
-            </Button>
-            {live && (
-              <Button disabled={busy} onClick={() => save(false)}>
-                Remove from showcase
-              </Button>
-            )}
-          </div>
-        </>
+      <h3 className="ib-subtitle">{live ? 'Live in the showcase' : 'Review for the showcase'}</h3>
+      <p className="ib-lede">
+        Visitors would see only the title, brief and category below, with {record.name}’s name, class and email (
+        {record.email}). The full idea stays here.
+      </p>
+
+      {review.issues.length > 0 && (
+        <ul className="ib-issues" aria-label="Things to check">
+          {review.issues.map((issue) => (
+            <li key={issue.text} className={'is-' + issue.level}>
+              {issue.text}
+            </li>
+          ))}
+        </ul>
       )}
+
+      <div className="ib-form-grid is-single">
+        <TextField
+          label="Title"
+          name="title"
+          value={title}
+          maxLength={IDEA_TITLE_MAX}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <TextField
+          label="Brief"
+          name="brief"
+          type="textarea"
+          rows={2}
+          value={brief}
+          maxLength={IDEA_BRIEF_MAX}
+          onChange={(e) => setBrief(e.target.value)}
+          hint={`${brief.length}/${IDEA_BRIEF_MAX} · drafted from the problem and solution; edit freely.`}
+        />
+        <div className="ib-field">
+          <label className="ib-label" htmlFor="idea-pub-category">
+            Category <small>{record.category ? 'optional' : 'suggested'}</small>
+          </label>
+          <select id="idea-pub-category" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">No category</option>
+            {categories.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {!consent && (
+        <div className="ib-permission">
+          <h4>Permission</h4>
+          <p>
+            This was submitted before students were asked about a public listing. Ask {record.name.split(' ')[0]} first;
+            the email repeats exactly what would be shown.
+          </p>
+          <a
+            className="btn btn-ghost ib-btn"
+            href={`mailto:${record.email}?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`}
+          >
+            <Mail size={15} aria-hidden="true" /> Email {record.name.split(' ')[0]} for permission
+          </a>
+          <label className="ib-check-row">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <span>The student has agreed in writing to be featured as shown above. This is recorded with your name.</span>
+          </label>
+        </div>
+      )}
+      {consent && record.showcaseConsentRecord && (
+        <p className="ib-hint">
+          Permission recorded by {record.showcaseConsentRecord.by} on {formatDate(record.showcaseConsentRecord.at)}.
+        </p>
+      )}
+
+      <ErrorBox message={error} />
+      <div className="ib-actions">
+        <Button
+          primary
+          disabled={busy || !canPublish || !title.trim() || !brief.trim()}
+          onClick={() => save(true)}
+        >
+          {live ? 'Save changes' : 'Publish to showcase'}
+        </Button>
+        {!live && (
+          <Button disabled={busy || !title.trim() || !brief.trim()} onClick={() => save(false)}>
+            Save draft
+          </Button>
+        )}
+        {live && (
+          <Button disabled={busy} onClick={() => save(false)}>
+            Remove from showcase
+          </Button>
+        )}
+      </div>
     </section>
   );
 }
@@ -366,6 +411,7 @@ export default function Admin({ refreshPublic }) {
   const [confirmDemo, setConfirmDemo] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [notice, setNotice] = useState('');
+  const [ideaFilter, setIdeaFilter] = useState('');
   const [lastSynced, setLastSynced] = useState(null);
 
   const load = () =>
@@ -726,9 +772,39 @@ export default function Admin({ refreshPublic }) {
             </section>
           </div>
           <h3 className="ib-subtitle">Submissions</h3>
+          {data.ideas.length > 0 && (
+            <div className="ib-chips" role="group" aria-label="Filter ideas">
+              {[
+                ['', 'All'],
+                ['review', 'To review'],
+                ['featured', 'In showcase'],
+                ['rapid', 'Rapid-fire'],
+              ].map(([key, label]) => (
+                <button
+                  type="button"
+                  key={key || 'all'}
+                  className={'ib-chip' + (ideaFilter === key ? ' is-on' : '')}
+                  aria-pressed={ideaFilter === key}
+                  onClick={() => setIdeaFilter(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
           {data.ideas.length || data.rapid.length ? (
             <div className="ib-list">
-              {[...data.ideas, ...data.rapid].map((i) => (
+              {[...data.ideas, ...data.rapid]
+                .filter((i) =>
+                  ideaFilter === 'review'
+                    ? i.mode !== 'rapid' && !isPublished(i)
+                    : ideaFilter === 'featured'
+                      ? isPublished(i)
+                      : ideaFilter === 'rapid'
+                        ? i.mode === 'rapid'
+                        : true
+                )
+                .map((i) => (
                 <article className="ib-card ib-entry" key={i.id}>
                   <div className="ib-entry-head">
                     <div className="ib-tag-row">
@@ -736,7 +812,7 @@ export default function Admin({ refreshPublic }) {
                         {i.mode === 'rapid' ? 'Rapid-fire' : 'Idea'} · {i.id}
                       </Tag>
                       {isPublished(i) && <Tag tone="mint">In showcase</Tag>}
-                      {i.mode !== 'rapid' && !i.showcaseConsent && <Tag>No public listing</Tag>}
+                      {i.mode !== 'rapid' && !i.showcaseConsent && <Tag tone="amber">Permission needed</Tag>}
                     </div>
                     <Button onClick={() => setSelectedSubmission({ kind: i.mode === 'rapid' ? 'rapid' : 'ideas', record: i })}>
                       Details <ArrowUpRight size={14} />
@@ -765,10 +841,13 @@ export default function Admin({ refreshPublic }) {
             <IdeaPublish
               key={selectedSubmission.record.id}
               record={selectedSubmission.record}
+              allIdeas={data.ideas}
               onSaved={(record) => {
                 setSelectedSubmission({ kind: 'ideas', record });
                 setNotice(
-                  isPublished(record) ? 'Idea published — it is now in the showcase.' : 'Idea removed from the showcase.'
+                  isPublished(record)
+                    ? 'Idea published — it is now in the showcase.'
+                    : 'Saved. The idea is not in the showcase.'
                 );
                 load();
                 refreshPublic();
