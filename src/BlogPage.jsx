@@ -228,7 +228,8 @@ function PostModal({ post, onClose }) {
 
         {/* Scrollable body */}
         <div className="post-modal-body" data-lenis-prevent>
-          {post.coverUrl && (
+          {/* The cover is the card thumbnail; skip it here when the post already shows that image inline. */}
+          {post.coverUrl && !post.content.includes(`(${post.coverUrl})`) && (
             <div className="post-modal-cover-wrap">
               <img src={post.coverUrl} alt={`Cover for ${post.title}`} className="post-modal-cover" />
             </div>
