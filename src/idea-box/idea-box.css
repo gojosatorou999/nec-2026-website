@@ -579,6 +579,54 @@
 }
 .ib-startup-more { display: inline-flex; align-items: center; gap: 4px; color: var(--text); font-weight: 600; }
 
+/* ─── Student ideas (brief cards) ─────────────────────────────────────────── */
+.ib-idea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  text-align: left;
+  transition: transform 0.4s var(--ease-expo), border-color 0.3s var(--ease-soft);
+}
+.ib-idea:hover { transform: translateY(-4px); border-color: rgba(163, 178, 255, 0.3); }
+.ib-idea-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  color: var(--bulb);
+  background: rgba(255, 214, 92, 0.08);
+  border: 1px solid rgba(255, 214, 92, 0.25);
+}
+.ib-idea-meta {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.ib-idea h3 { font-size: 1.2rem; letter-spacing: -0.025em; overflow-wrap: anywhere; }
+.ib-idea-line { color: var(--text-2); font-size: 0.92rem; line-height: 1.65; overflow-wrap: anywhere; }
+.ib-idea-owner {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--ib-line);
+  font-size: 0.86rem;
+  color: var(--text-3);
+}
+.ib-idea-owner strong { color: var(--text); font-weight: 600; }
+.ib-idea-contact { flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.ib-idea-email { flex-basis: 100%; text-align: center; font-size: 0.74rem; color: var(--text-3); overflow-wrap: anywhere; }
+
+.ib-consent { align-items: flex-start; line-height: 1.55; padding: 6px 0; }
+.ib-consent input { margin-top: 2px; }
+.ib-publish { margin: 16px 0; display: flex; flex-direction: column; gap: 14px; }
+
 /* ─── Empty / loading / error ─────────────────────────────────────────────── */
 .ib-empty {
   display: flex;

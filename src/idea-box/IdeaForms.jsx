@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, CircleCheck, Lightbulb, ShieldCheck, Zap } from 'lucide-react';
+import { categories } from '../../shared/schema.js';
+import { IDEA_BRIEF_MAX, IDEA_TITLE_MAX } from '../../shared/ideas.js';
 import { api } from './api.js';
 import { Button, CopyField, EmptyState, ErrorBox, Heading, TextField } from './ui.jsx';
 
@@ -135,7 +137,37 @@ export default function IdeaForms({ initialMode = 'idea' }) {
                   )}
                 </div>
               ) : (
-                <TextField label="What problem have you noticed?" name="problem" type="textarea" full />
+                <>
+                  <TextField
+                    label="Idea title"
+                    name="title"
+                    full
+                    maxLength={IDEA_TITLE_MAX}
+                    placeholder="A short name for your idea"
+                    hint="Shown as the heading if your idea is featured in the showcase."
+                  />
+                  <TextField
+                    label="Short brief"
+                    name="brief"
+                    type="textarea"
+                    rows={2}
+                    full
+                    maxLength={IDEA_BRIEF_MAX}
+                    hint="One or two sentences. This is all the public sees; your full idea stays with the organizers."
+                  />
+                  <div className="ib-field is-full">
+                    <label className="ib-label" htmlFor="idea-category">
+                      Category <small>optional</small>
+                    </label>
+                    <select id="idea-category" name="category" defaultValue="">
+                      <option value="">Choose a category</option>
+                      {categories.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <TextField label="What problem have you noticed?" name="problem" type="textarea" full />
+                </>
               )}
               <TextField label="Your proposed solution" name="solution" type="textarea" rows={4} full />
               {(rapid
@@ -150,8 +182,20 @@ export default function IdeaForms({ initialMode = 'idea' }) {
                 <TextField key={k} label={l} name={k} type="textarea" rows={2} required={req} full />
               ))}
             </div>
+            {!rapid && (
+              <label className="ib-check-row ib-consent">
+                <input type="checkbox" name="showcaseConsent" />
+                <span>
+                  The organizers may feature my idea’s title and short brief in the public showcase, with my name,
+                  department, year and email so interested people can contact me. My full idea is never shown.
+                </span>
+              </label>
+            )}
             <p className="ib-note">
-              <ShieldCheck size={16} /> Submissions are shared only with the organizing team.
+              <ShieldCheck size={16} />{' '}
+              {rapid
+                ? 'Submissions are shared only with the organizing team.'
+                : 'Nothing is public unless you tick the box above and an organizer approves it.'}
             </p>
             <ErrorBox message={error} />
             <Button primary disabled={busy} type="submit">

@@ -8,7 +8,13 @@ import {
   timingSafeEqual,
   createHash,
 } from "node:crypto";
-import { validateApplication } from "../shared/schema.js";
+import { validateApplication, categories } from "../shared/schema.js";
+import {
+  IDEA_BRIEF_MAX,
+  IDEA_TITLE_MAX,
+  isPublished,
+  publicIdea,
+} from "../shared/ideas.js";
 import { submissionMarkdown } from "../shared/submissions.js";
 import { submissionPdf } from "./submission-pdf.js";
 import { publicStartup } from "./public-startup.js";
@@ -184,6 +190,11 @@ app.get("/api/startups/:id/files/:field{/:index}", async (req, res) => {
     return res.status(404).json({ error: "File not found." });
   sendUpload(res, startup, req.params.field, req.params.index);
 });
+app.get("/api/ideas/showcase", async (req, res) =>
+  res.json(
+    (await db.all("idea_submissions")).filter(isPublished).map(publicIdea),
+  ),
+);
 app.get("/api/problems", async (req, res) =>
   res.json((await db.all("problem_statements")).filter((p) => p.active)),
 );
@@ -398,6 +409,20 @@ app.post("/api/ideas", async (req, res) => {
     return res.status(400).json({
       error: "Please complete the required fields with a valid email.",
     });
+  // Publishing is an organizer decision: a visitor can never self-publish.
+  delete d.showcase;
+  if (d.mode === "rapid") delete d.showcaseConsent;
+  else {
+    d.title = typeof d.title === "string" ? d.title.trim() : "";
+    d.brief = typeof d.brief === "string" ? d.brief.trim() : "";
+    if (d.title.length > IDEA_TITLE_MAX || d.brief.length > IDEA_BRIEF_MAX)
+      return res.status(400).json({
+        error: `Keep the idea title under ${IDEA_TITLE_MAX} and the brief under ${IDEA_BRIEF_MAX} characters.`,
+      });
+    d.category = categories.includes(d.category) ? d.category : "";
+    d.showcaseConsent =
+      d.showcaseConsent === true || d.showcaseConsent === "on";
+  }
   if (
     d.mode === "rapid" &&
     !(await db.get("problem_statements", d.problemId))?.active
@@ -546,6 +571,51 @@ app.post("/api/admin/problems", auth, async (req, res) => {
     active: true,
   });
   res.status(201).json({ id });
+});
+app.patch("/api/admin/ideas/:id", auth, async (req, res) => {
+  const { published, title, brief, category } = req.body;
+  const heading = typeof title === "string" ? title.trim() : "";
+  const summary = typeof brief === "string" ? brief.trim() : "";
+  if (
+    typeof published !== "boolean" ||
+    heading.length > IDEA_TITLE_MAX ||
+    summary.length > IDEA_BRIEF_MAX
+  )
+    return res.status(400).json({
+      error: `Choose publish or remove, with a title under ${IDEA_TITLE_MAX} and a brief under ${IDEA_BRIEF_MAX} characters.`,
+    });
+  const showcase = await db.transaction(async (tx) => {
+    const idea = await tx.get("idea_submissions", req.params.id, {
+      lock: true,
+    });
+    if (!idea) {
+      const e = new Error("Idea not found.");
+      e.status = 404;
+      throw e;
+    }
+    if (published && idea.showcaseConsent !== true) {
+      const e = new Error(
+        "This student did not agree to a public listing. Ask them to resubmit with permission.",
+      );
+      e.status = 409;
+      throw e;
+    }
+    const next = {
+      published,
+      title: heading || idea.showcase?.title || "",
+      brief: summary || idea.showcase?.brief || "",
+      publishedAt: published
+        ? idea.showcase?.publishedAt || new Date().toISOString()
+        : null,
+    };
+    await tx.put("idea_submissions", idea.id, {
+      ...idea,
+      ...(categories.includes(category) ? { category } : {}),
+      showcase: next,
+    });
+    return next;
+  }, req.user.id);
+  res.json({ ok: true, showcase });
 });
 app.patch("/api/admin/problems/:id", auth, async (req, res) => {
   const p = await db.get("problem_statements", req.params.id);

@@ -6,6 +6,7 @@ import WaterLayer from './components/WaterLayer';
 import { scrollToY } from './smoothScroll.js';
 import { api } from './idea-box/api.js';
 import Showcase from './idea-box/Showcase.jsx';
+import IdeaShowcase from './idea-box/IdeaShowcase.jsx';
 import Registration from './idea-box/Registration.jsx';
 import IdeaForms from './idea-box/IdeaForms.jsx';
 import Status from './idea-box/Status.jsx';
@@ -115,7 +116,7 @@ const PROCESS = [
   ['Exhibit', 'Present at the expo. Visitors leave feedback that reaches your private inbox.'],
 ];
 
-function Overview({ startups, loading, openChallenges }) {
+function Overview({ startups, ideas, loading, openChallenges }) {
   const listed = startups.filter((x) => x.status === 'Approved' && !x.isDemo).length;
   return (
     <>
@@ -171,6 +172,15 @@ function Overview({ startups, loading, openChallenges }) {
                 Startups in the showcase
               </dt>
               <dd>{loading ? '—' : listed || 'Opens soon'}</dd>
+            </div>
+            <div>
+              <dt>
+                <span className="ib-glance-icon" aria-hidden="true">
+                  <Lightbulb size={16} strokeWidth={1.8} />
+                </span>
+                Student ideas featured
+              </dt>
+              <dd>{loading ? '—' : ideas.length || 'Opens soon'}</dd>
             </div>
             <div>
               <dt>
@@ -244,6 +254,8 @@ function Overview({ startups, loading, openChallenges }) {
 
       <Showcase startups={startups} loading={loading} />
 
+      <IdeaShowcase ideas={ideas} loading={loading} />
+
       <section className="ib-section" id="about" aria-labelledby="process-title">
         <div className="ib-section-head">
           <p className="eyebrow ib-eyebrow">For startups</p>
@@ -280,17 +292,18 @@ function Overview({ startups, loading, openChallenges }) {
 export default function IdeaBoxPage() {
   const [route, setRoute] = useState(routeFromHash);
   const [startups, setStartups] = useState([]);
+  const [ideas, setIdeas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openChallenges, setOpenChallenges] = useState(null);
 
   const refresh = useCallback(
     () =>
-      api('/startups')
-        .then(setStartups)
-        // Keep the showcase quiet while the API is unavailable; previously
-        // loaded profiles stay visible and the next poll retries.
-        .catch(() => {})
-        .finally(() => setLoading(false)),
+      // Keep the showcases quiet while the API is unavailable; previously
+      // loaded profiles stay visible and the next poll retries.
+      Promise.all([
+        api('/startups').then(setStartups).catch(() => {}),
+        api('/ideas/showcase').then(setIdeas).catch(() => {}),
+      ]).finally(() => setLoading(false)),
     []
   );
 
@@ -339,7 +352,7 @@ export default function IdeaBoxPage() {
         <main id="top">
           {isOverview ? (
             <div className="ib-wrap ib-top">
-              <Overview startups={startups} loading={loading} openChallenges={openChallenges} />
+              <Overview startups={startups} ideas={ideas} loading={loading} openChallenges={openChallenges} />
             </div>
           ) : (
             <div className="ib-wrap ib-top">
