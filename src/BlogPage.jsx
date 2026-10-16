@@ -129,7 +129,7 @@ function BlogCard({ post, onClick }) {
           <span className="eyebrow" style={{ color: 'var(--text-3)' }}>·</span>
           <span className="eyebrow">{formatDate(post.createdAt)}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18, flexWrap: 'wrap' }}>
+        <div className="blog-card-actions">
           <span className="btn btn-ghost blog-card-cta" style={{ padding: '9px 20px', fontSize: '0.82rem' }}>
             Read more <IconArrow />
           </span>
@@ -415,8 +415,9 @@ export default function BlogPage() {
         }
         .blog-card-excerpt {
           margin-top: 10px; font-size: 0.9rem; color: var(--text-2); line-height: 1.7;
-          display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
         }
+        /* Cards in a row share a height; the action row sits at the bottom so no card has a dead gap under it. */
+        .blog-card-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: auto; padding-top: 18px; }
         .blog-card-meta { margin-top:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .blog-card-cta { align-self: flex-start; }
 
